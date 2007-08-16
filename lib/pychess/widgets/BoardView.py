@@ -73,7 +73,6 @@ def matrixAround (rotatedMatrix, anchorX, anchorY):
     matrix = cairo.Matrix(co, si, -si, co, axco+aysi, ayco-axsi)
     invmatrix = cairo.Matrix(co, -si, si, co, axco-aysi, ayco+axsi)
     return matrix, invmatrix
-
 ANIMATION_TIME = .5
 
 # If this is true, the board is scaled so that everything fits inside the window
@@ -147,7 +146,7 @@ class BoardView (gtk.DrawingArea):
             if model.boards[-1].board.isChecked():
                 sound = "aPlayerChecks"
             
-            if model.players[0].__type__ == REMOTE and \
+            if not model.players or model.players[0].__type__ == REMOTE and \
                     model.players[1].__type__ == REMOTE:
                 sound = "observedMoves"
             
