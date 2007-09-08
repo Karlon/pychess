@@ -5,6 +5,7 @@ import atexit
 
 from pychess.System import myconf
 from pychess.Utils.const import *
+from pychess.Utils import book # Kills pychess if no sqlite available
 from pychess.Players.Human import Human
 from pychess.System.Log import log
 from pychess.widgets import tipOfTheDay
