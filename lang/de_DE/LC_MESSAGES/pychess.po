@@ -3,25 +3,27 @@
 # This file is distributed under the same license as the Pychess package.
 #
 # Norbert Fabritius <nori.f@gmx.de>, 2006.
-# 
-# 
+#
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Pychess 0.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-14 22:34+0100\n"
-"PO-Revision-Date: 2006-12-15 23:23+0200\n"
-"Last-Translator: Norbert Fabritius <nori.f@gmx.de>\n"
+"POT-Creation-Date: 2006-12-19 18:39+0100\n"
+"PO-Revision-Date: 2007-09-13 10:31-0400\n"
+"Last-Translator: Leonardo Gregianin <leogregianin@gmail.com>\n"
 "Language-Team: German <nori.f@gmx.de>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Rosetta-Export-Date: 2007-08-31 14:38:34+0000\n"
 
 #: glade/gamepreview.glade:114
 msgid "<b>Open game</b>"
 msgstr "<b>Partie öffnen<b>"
 
-#: glade/gamepreview.glade:129 lib/pychess/widgets/ionest.py:39
+#: glade/gamepreview.glade:129
+#: lib/pychess/widgets/ionest.py:39
 msgid "Open Game"
 msgstr "Partie öffnen"
 
@@ -29,7 +31,8 @@ msgstr "Partie öffnen"
 msgid "<b>Initial position</b>"
 msgstr "<b>Grundstellung</b>"
 
-#: glade/newInOut.glade:12 lib/pychess/widgets/ionest.py:37
+#: glade/newInOut.glade:12
+#: lib/pychess/widgets/ionest.py:37
 msgid "Save Game"
 msgstr "Partie speichern"
 
@@ -45,11 +48,13 @@ msgstr "Neue Partie"
 msgid "_Start Game"
 msgstr "Partie _Starten"
 
-#: glade/newInOut.glade:338 glade/newInOut.glade:491
+#: glade/newInOut.glade:338
+#: glade/newInOut.glade:491
 msgid "White Player:"
 msgstr "Weißer Spieler:"
 
-#: glade/newInOut.glade:366 glade/newInOut.glade:519
+#: glade/newInOut.glade:366
+#: glade/newInOut.glade:519
 msgid "Black Player:"
 msgstr "Schwarzer Spieler:"
 
@@ -71,11 +76,11 @@ msgstr "Stunden:"
 
 #: glade/newInOut.glade:735
 msgid "Minutes: "
-msgstr "Minuten:"
+msgstr "Minuten: "
 
 #: glade/newInOut.glade:763
 msgid "Seconds: "
-msgstr "Sekunden:"
+msgstr "Sekunden: "
 
 #: glade/newInOut.glade:791
 msgid "Gain:"
@@ -214,69 +219,141 @@ msgstr ""
 msgid "http://code.google.com/p/pychess/"
 msgstr "http://code.google.com/p/pychess/"
 
-#: glade/PyChess.glade:474
+#: glade/PyChess.glade:477
 msgid "Game information"
 msgstr "Partiedaten"
 
-# In the chessclock
-#: glade/PyChess.glade:597
+#: glade/PyChess.glade:600
 msgid "Site:"
 msgstr "Ort:"
 
-#: glade/PyChess.glade:625
+#: glade/PyChess.glade:628
 msgid "Round:"
 msgstr "Runde:"
 
-#: glade/PyChess.glade:716
+#: glade/PyChess.glade:719
 msgid "Event:"
 msgstr "Ereignis"
 
-#: glade/PyChess.glade:753
+#: glade/PyChess.glade:756
 msgid "<b>Game data</b>"
 msgstr "<b>Patiedaten</b>"
 
-#: glade/PyChess.glade:830
+#: glade/PyChess.glade:833
 msgid "<b>Date of game</b>"
 msgstr "<b>Datum der Partie</b>"
 
-#: lib/pychess/Main.py:30
+#: lib/pychess/Main.py:22
 #, python-format
 msgid "<big><b>Engine, %s, has died</b></big>"
 msgstr "<big><b>Engine, %s, ist abgestürzt</b></big>"
 
-#: lib/pychess/Main.py:31
+#: lib/pychess/Main.py:23
 msgid ""
 "PyChess has lost connection to the engine, probably because it has died.\n"
 "\n"
-"You can try to start a new game with the engine, or try to play against "
-"another one."
+"You can try to start a new game with the engine, or try to play against another one."
 msgstr ""
-"PyChess hat die Verbindung zur Engine verloren, möglicherweise ist sie "
-"abgestürtzt.\n"
+"PyChess hat die Verbindung zur Engine verloren, möglicherweise ist sie abgestürtzt.\n"
 "\n"
-"Sie können versuchen ein neues Spiel mit der Engine zu starten, oder gegen "
-"eine andere spielen."
+"Sie können versuchen ein neues Spiel mit der Engine zu starten, oder gegen eine andere spielen."
 
 # This page is opened by the "About chess" menu item.
 # You should be able to find a wikipage in your language, or similar info from a different page.
-# If not possible, simply leave it.
-#: lib/pychess/Main.py:252
+#: lib/pychess/Main.py:244
 msgid "http://en.wikipedia.org/wiki/Chess"
 msgstr "http://de.wikipedia.org/wiki/Schach"
 
 # This page is opened by the "How to play" menu item.
 # You should be able to find a wikipage in your language, or similar info from a different page.
-# If not possible, simply leave it.
-#: lib/pychess/Main.py:255
+#: lib/pychess/Main.py:247
 msgid "http://en.wikipedia.org/wiki/Rules_of_chess"
 msgstr "http://de.wikipedia.org/wiki/Schach#Spielregeln"
 
-# In the chessclock
+#: lib/pychess/Players/Human.py:59
+msgid "<big><b>You've got a draw offer. Accept?</b></big>"
+msgstr "<big><b>Ihnen wird Remis angeboten. Möchten Sie akzeptieren?</b></big>"
+
+#: lib/pychess/Players/Human.py:60
+msgid "Your opponent has offered you a draw. If you accept it the game will end with score 1/2 - 1/2."
+msgstr "Ihr Gegner hat ihnen Remis angeboten. Wenn Sie es akzeptieren wird das Spiel mit dem Ergebnis 1/2 - 1/2 enden."
+
+#: lib/pychess/Savers/epd.py:10
+msgid "Chess Position"
+msgstr "Schachstellung"
+
+#: lib/pychess/Savers/pgn.py:8
+msgid "Chess Game"
+msgstr "Schachpartie"
+
+#: lib/pychess/Utils/Game.py:40
+msgid "Local Event"
+msgstr "Örtliches Ereignis"
+
+#: lib/pychess/Utils/Game.py:42
+msgid "Local site"
+msgstr "local"
+
+#: lib/pychess/Utils/Game.py:167
+msgid "The game ended in a draw"
+msgstr "Das Spiel endete remis"
+
+#: lib/pychess/Utils/Game.py:168
+msgid "White player won the game"
+msgstr "Weiß gewann"
+
+#: lib/pychess/Utils/Game.py:169
+msgid "Black player won the game"
+msgstr "Schwarz gewann"
+
+#: lib/pychess/Utils/Game.py:172
+msgid "caused by insufficient material"
+msgstr "wegen ungenügendem Material zum Mattsetzen"
+
+#: lib/pychess/Utils/Game.py:173
+msgid "as the same position was repeated three times in a row"
+msgstr "wegen dreimaliger Stellungswiederholung"
+
+#: lib/pychess/Utils/Game.py:174
+msgid "as the last 50 moves brought nothing new"
+msgstr "durch die 50-Züge Regel"
+
+#: lib/pychess/Utils/Game.py:175
+msgid "because of stalemate"
+msgstr "durch Patt"
+
+#: lib/pychess/Utils/Game.py:176
+msgid "as the players agreed to"
+msgstr "durch Einigung beider Spieler"
+
+#: lib/pychess/Utils/Game.py:177
+msgid "as opponent resigned"
+msgstr "durch Aufgabe des Gegners"
+
+#: lib/pychess/Utils/Game.py:178
+msgid "as opponent ran out of time"
+msgstr "auf Zeit"
+
+#: lib/pychess/Utils/Game.py:179
+msgid "on a mate"
+msgstr "durch Matt"
+
+#: lib/pychess/Utils/Game.py:194
+msgid "Draw offer has been sent"
+msgstr "Remisangebot wurde gesendet"
+
+#: lib/pychess/Utils/Game.py:200
+msgid "Couldn't call flag in game with no timecontrols"
+msgstr "Konnte nicht auf Zeit reklamieren, da nicht auf Zeit gespielt wird"
+
+#: lib/pychess/Utils/Game.py:207
+msgid "Couldn't call flag on player not out of time"
+msgstr "Konnte nicht auf Zeit reklamieren, da der Gegener hat noch Zeit hat"
+
 #: lib/pychess/widgets/ChessClock.py:15
 msgid "White"
 msgstr "Weiß"
 
-# In the chessclock
 #: lib/pychess/widgets/ChessClock.py:15
 msgid "Black"
 msgstr "Schwarz"
@@ -309,47 +386,50 @@ msgstr "Experte"
 msgid "Human Being"
 msgstr "Mensch"
 
-#: lib/pychess/widgets/ionest.py:315
+#: lib/pychess/widgets/ionest.py:312
 #, python-format
 msgid "<big><b>Unknown filetype '%s'</b></big>"
 msgstr "<big><b>Unbekannter Dateityp '%s'</b></big>"
 
-#: lib/pychess/widgets/ionest.py:316
+#: lib/pychess/widgets/ionest.py:313
 #, python-format
 msgid "Wasn't able to save '%s' as pychess doesn't know the format '%s'."
 msgstr "Konnte '%s' nicht abspeichern da PyChess das Format '%s' nicht kennt."
 
-#: lib/pychess/widgets/ionest.py:329
+#: lib/pychess/widgets/ionest.py:326
+#, python-format
+msgid "<big><b>Unable to save file '%s'</b></big>"
+msgstr ""
+
+#: lib/pychess/widgets/ionest.py:328
+msgid ""
+"You don't have the necessary rights to save the file.\n"
+"Please ensure that you have given the right path and try again."
+msgstr ""
+
+#: lib/pychess/widgets/ionest.py:336
 msgid "_Replace"
 msgstr "_Ersetzen"
 
-#: lib/pychess/widgets/ionest.py:331
+#: lib/pychess/widgets/ionest.py:340
 msgid "File exists"
 msgstr "Datei existiert"
 
-#: lib/pychess/widgets/ionest.py:333
+#: lib/pychess/widgets/ionest.py:342
 #, python-format
-msgid ""
-"<big><b>A file named '%s' alredy exists. Would you like to replace it?</b></"
-"big>"
-msgstr ""
-"<big><b>Eine Datei mit dem Namen '%s' existiert bereits. Möchten Sie sie "
-"ersetzen?</b></big>"
+msgid "<big><b>A file named '%s' alredy exists. Would you like to replace it?</b></big>"
+msgstr "<big><b>Eine Datei mit dem Namen '%s' existiert bereits. Möchten Sie sie ersetzen?</b></big>"
 
-#: lib/pychess/widgets/ionest.py:334
+#: lib/pychess/widgets/ionest.py:343
 #, python-format
-msgid ""
-"The file alredy exists in '%s'. If you replace it, its content will be "
-"overwritten."
-msgstr ""
-"Die Datei existiert bereits in '%s'. Wenn Sie sie ersetzen wird ihr Inhalt "
-"überschrieben."
+msgid "The file alredy exists in '%s'. If you replace it, its content will be overwritten."
+msgstr "Die Datei existiert bereits in '%s'. Wenn Sie sie ersetzen wird ihr Inhalt überschrieben."
 
-#: lib/pychess/widgets/ionest.py:356
+#: lib/pychess/widgets/ionest.py:368
 msgid "<b><big>Save the current game before you close it?</big></b>"
 msgstr "<b><big>Die Partie vor der Schliessen abspeichern?</big></b>"
 
-#: lib/pychess/widgets/ionest.py:358
+#: lib/pychess/widgets/ionest.py:370
 msgid ""
 "It is not possible later to continue the game,\n"
 "if do don't save it."
@@ -357,103 +437,10 @@ msgstr ""
 "Es ist nicht möglich die Partie später fortzusetzen,\n"
 "wenn Sie sie jetzt nicht abspeichern."
 
-#: lib/pychess/widgets/ionest.py:375
+#: lib/pychess/widgets/ionest.py:387
+#, python-format
 msgid "<big><b>There are %d games with unsaved changes:</b></big>"
 msgstr "<big><b>Es gibt %d Partien mit ungespeicherten Änderungen:</b></big>"
-
-# The event at which the game was played
-#: lib/pychess/Utils/Game.py:39
-msgid "Local Event"
-msgstr "Örtliches Ereignis"
-
-# The location at witch the game was played
-#: lib/pychess/Utils/Game.py:41
-msgid "Local site"
-msgstr "local"
-
-#: lib/pychess/Utils/Game.py:154
-msgid "The game ended in a draw"
-msgstr "Das Spiel endete remis"
-
-#: lib/pychess/Utils/Game.py:155
-msgid "White player won the game"
-msgstr "Weiß gewann"
-
-#: lib/pychess/Utils/Game.py:156
-msgid "Black player won the game"
-msgstr "Schwarz gewann"
-
-# The the context: The game ended in a draw...
-#: lib/pychess/Utils/Game.py:159
-msgid "caused by insufficient material"
-msgstr "wegen ungenügendem Material zum Mattsetzen"
-
-# In the sentence "The game has (e.g. ended) ..."
-#: lib/pychess/Utils/Game.py:160
-msgid "as the same position was repeated three times in a row"
-msgstr "wegen dreimaliger Stellungswiederholung"
-
-# In the sentence "The game has (e.g. ended) ..."
-#: lib/pychess/Utils/Game.py:161
-msgid "as the last 50 moves brought nothing new"
-msgstr "durch die 50-Züge Regel"
-
-# In the sentence "The game has (e.g. ended) ..."
-#: lib/pychess/Utils/Game.py:162
-msgid "because of stalemate"
-msgstr "durch Patt"
-
-# In the sentence "The game has (e.g. ended) ..."
-#: lib/pychess/Utils/Game.py:163
-msgid "as the players agreed to"
-msgstr "durch Einigung beider Spieler"
-
-# In the sentence "The game has (e.g. ended) ..."
-#: lib/pychess/Utils/Game.py:164
-msgid "as opponent resigned"
-msgstr "durch Aufgabe des Gegners"
-
-# In the sentence "The game has (e.g. ended) ..."
-#: lib/pychess/Utils/Game.py:165
-msgid "as opponent ran out of time"
-msgstr "auf Zeit"
-
-# In the sentence "The game has (e.g. ended) ..."
-#: lib/pychess/Utils/Game.py:166
-msgid "on a mate"
-msgstr "durch Matt"
-
-#: lib/pychess/Utils/Game.py:177
-msgid "Draw offer has been sent"
-msgstr "Remisangebot wurde gesendet"
-
-#: lib/pychess/Utils/Game.py:187
-msgid "Couldn't call flag in game with no timecontrols"
-msgstr "Konnte nicht auf Zeit reklamieren, da nicht auf Zeit gespielt wird"
-
-#: lib/pychess/Utils/Game.py:194
-msgid "Couldn't call flag on player not out of time"
-msgstr "Konnte nicht auf Zeit reklamieren, da der Gegener hat noch Zeit hat"
-
-#: lib/pychess/Savers/epd.py:9
-msgid "Chess Position"
-msgstr "Schachstellung"
-
-#: lib/pychess/Savers/pgn.py:7
-msgid "Chess Game"
-msgstr "Schachpartie"
-
-#: lib/pychess/Players/Human.py:59
-msgid "<big><b>You've got a draw offer. Accept?</b></big>"
-msgstr "<big><b>Ihnen wird Remis angeboten. Möchten Sie akzeptieren?</b></big>"
-
-#: lib/pychess/Players/Human.py:60
-msgid ""
-"Your opponent has offered you a draw. If you accept it the game will end "
-"with score 1/2 - 1/2."
-msgstr ""
-"Ihr Gegner hat ihnen Remis angeboten. Wenn Sie es akzeptieren wird das Spiel "
-"mit dem Ergebnis 1/2 - 1/2 enden."
 
 #: sidepanel/bookPanel.py:7
 msgid "Opening Book"
@@ -478,24 +465,18 @@ msgstr "Ergebnis"
 #~ msgid "You are not currently playing any game pychess can save for you."
 #~ msgstr ""
 #~ "Es ist momentan kein Spiel offen, das PyChess für Sie speichern könnte."
-
 #~ msgid "a new game starts"
 #~ msgstr "Eine neue Partie beginnt"
-
 #~ msgid "you open a new game"
 #~ msgstr "Sie öffnen eine neue Partie"
-
 #~ msgid "exit"
 #~ msgstr "Schliessen"
-
 #~ msgid "_Don't save"
 #~ msgstr "_Nicht speichern"
-
 #~ msgid "_Undo"
 #~ msgstr "Zug _Zurücknehmen"
-
 #~ msgid "_Pause"
 #~ msgstr "_Pause"
-
 #~ msgid "Player info"
 #~ msgstr "Spieler Informationen"
+

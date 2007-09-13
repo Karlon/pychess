@@ -8,12 +8,13 @@ msgstr ""
 "Project-Id-Version: PyChess 0.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-12-19 18:39+0100\n"
-"PO-Revision-Date: 2007-01-27 10:11-0400\n"
-"Last-Translator: Leonardo Gregianin <leonardo@riseup.net>\n"
+"PO-Revision-Date: 2007-09-13 10:28-0400\n"
+"Last-Translator: Leonardo Gregianin <leogregianin@gmail.com>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Rosetta-Export-Date: 2007-08-31 14:38:29+0000\n"
 
 #: glade/gamepreview.glade:114
 msgid "<b>Open game</b>"
@@ -34,6 +35,7 @@ msgid "Save Game"
 msgstr "Salvar partida"
 
 #: glade/newInOut.glade:107
+#, fuzzy
 msgid "Choose filetype (By extension)"
 msgstr "Tipo de arquivo (por extensão)"
 
@@ -73,18 +75,16 @@ msgstr "Horas:"
 
 #: glade/newInOut.glade:735
 msgid "Minutes: "
-msgstr "Minutos:"
+msgstr "Minutos: "
 
 #: glade/newInOut.glade:763
 msgid "Seconds: "
-msgstr "Segundos:"
+msgstr "Segundos: "
 
-# "Gain" as in "gain per move"
 #: glade/newInOut.glade:791
 msgid "Gain:"
 msgstr "Incremento:"
 
-# The heading for the "time controls" part of the new-game dialog
 #: glade/newInOut.glade:928
 msgid "<b>Alarm</b>"
 msgstr "<b>Tempo</b>"
@@ -137,12 +137,10 @@ msgstr "Salvar partida _como"
 msgid "_Actions"
 msgstr "Açõ_es"
 
-# Lets you win the game, if opponent is out of time
 #: glade/PyChess.glade:199
 msgid "_Call Flag"
 msgstr "_Chamar bandeira"
 
-# Offer Draw
 #: glade/PyChess.glade:208
 msgid "_Draw"
 msgstr "Em_pate"
@@ -151,14 +149,13 @@ msgstr "Em_pate"
 msgid "_Resign"
 msgstr "Aban_donar"
 
-# Makes the computer engine move instantly (and might send a network player a "wink" in a later version)
 #: glade/PyChess.glade:232
 msgid "_Force to move"
 msgstr "_Forçar movimento"
 
 #: glade/PyChess.glade:259
 msgid "_View"
-msgstr "_Ver"
+msgstr "_Visualização"
 
 #: glade/PyChess.glade:268
 msgid "_Rotate Board"
@@ -201,7 +198,6 @@ msgid "Chessclient for the Gnome desktop"
 msgstr "Cliente de xadrez para o Gnome"
 
 # You might be able to find this one on the web.
-# You might also skip translating it.
 #: glade/PyChess.glade:444
 msgid ""
 "PyChess is free software; you can redistribute it and/or modify \n"
@@ -218,22 +214,21 @@ msgid ""
 "along with PyChess; if not, write to the Free Software Foundation, Inc., \n"
 "51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA"
 msgstr ""
-"PyChess is free software; you can redistribute it and/or modify \n"
-"it under the terms of the GNU General Public License as published by \n"
-"the Free Software Foundation; either version 2 of the License, or \n"
-"(at your option) any later version.\n"
+"PyChess é um software livre; você pode redistribuí-lo e/ou modificá-lo\n"
+"sob os termos da Licença Pública Geral GNU (GPL) como publicada pela\n"
+"Fundação do Software Livre; seja a versão 2 da Licença ou (se preferir)\n"
+"qualquer versão mais recente.\n"
 "\n"
-"PyChess is distributed in the hope that it will be useful, \n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of \n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the \n"
-"GNU General Public License for more details.\n"
+"O PyChess é distribuído na esperança de que seja útil,\n"
+"mas SEM NENHUMA GARANTIA; até mesmo sem a garantia implicada\n"
+"de COMERCIALIZAÇÃO ou de ADAPTAÇÃO A UM PROPÓSITO EM PARTICULAR.\n"
+"Veja a Licença Pública Geral GNU (GPL) para mais detalhes.\n"
 "\n"
-"You should have received a copy of the GNU General Public License \n"
-"along with PyChess; if not, write to the Free Software Foundation, Inc., \n"
-"51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA"
+"Você deve ter recebido uma cópia da Licença Pública Geral GNU (GPL)\n"
+"junto com o PyChess; se não, escreva para a Free Software Foundation, Inc.,\n"
+"51 Franklin St, Fifth Floor. Boston, MA  02110-1301  USA"
 
 # No need for translating this one :)
-# I just wasn't able to convince glade that the string was not translateable
 #: glade/PyChess.glade:459
 msgid "http://code.google.com/p/pychess/"
 msgstr "http://code.google.com/p/pychess/"
@@ -279,14 +274,12 @@ msgstr ""
 
 # This page is opened by the "About chess" menu item.
 # You should be able to find a wikipage in your language, or similar info from a different page.
-# If not possible, simply leave it.
 #: lib/pychess/Main.py:244
 msgid "http://en.wikipedia.org/wiki/Chess"
 msgstr "http://pt.wikipedia.org/wiki/Xadrez"
 
 # This page is opened by the "How to play" menu item.
 # You should be able to find a wikipage in your language, or similar info from a different page.
-# If not possible, simply leave it.
 #: lib/pychess/Main.py:247
 msgid "http://en.wikipedia.org/wiki/Rules_of_chess"
 msgstr "http://pt.wikipedia.org/wiki/Regras_do_xadrez"
@@ -307,12 +300,10 @@ msgstr "Posição"
 msgid "Chess Game"
 msgstr "Partida"
 
-# The event at which the game was played
 #: lib/pychess/Utils/Game.py:40
 msgid "Local Event"
 msgstr "Evento local"
 
-# The location at witch the game was played
 #: lib/pychess/Utils/Game.py:42
 msgid "Local site"
 msgstr "Lugar local"
@@ -329,42 +320,34 @@ msgstr "O jogador das brancas ganhou a partida"
 msgid "Black player won the game"
 msgstr "O jogador das pretas ganhou a partida"
 
-# The the context: The game ended in a draw...
 #: lib/pychess/Utils/Game.py:172
 msgid "caused by insufficient material"
 msgstr "por material insuficiente"
 
-# In the sentence "The game has (e.g. ended) ..."
 #: lib/pychess/Utils/Game.py:173
 msgid "as the same position was repeated three times in a row"
 msgstr "porque a posição se repetiu três vezes"
 
-# In the sentence "The game has (e.g. ended) ..."
 #: lib/pychess/Utils/Game.py:174
 msgid "as the last 50 moves brought nothing new"
 msgstr "porque nas últimas 50 jogadas não foi capturado nada"
 
-# In the sentence "The game has (e.g. ended) ..."
 #: lib/pychess/Utils/Game.py:175
 msgid "because of stalemate"
 msgstr "porque ficou empatado"
 
-# In the sentence "The game has (e.g. ended) ..."
 #: lib/pychess/Utils/Game.py:176
 msgid "as the players agreed to"
-msgstr "porque os jogadores não entraram em acordo"
+msgstr "porque os jogadores entraram em acordo"
 
-# In the sentence "The game has (e.g. ended) ..."
 #: lib/pychess/Utils/Game.py:177
 msgid "as opponent resigned"
 msgstr "porque o oponente abandonou"
 
-# In the sentence "The game has (e.g. ended) ..."
 #: lib/pychess/Utils/Game.py:178
 msgid "as opponent ran out of time"
 msgstr "porque acabou o tempo do oponente"
 
-# In the sentence "The game has (e.g. ended) ..."
 #: lib/pychess/Utils/Game.py:179
 msgid "on a mate"
 msgstr "por mate"
@@ -381,27 +364,22 @@ msgstr "Você não pode chamar a bandeira no jogo que não tenha o controle do t
 msgid "Couldn't call flag on player not out of time"
 msgstr "Não pode chamar a bandeira no jogador sem tempo"
 
-# In the chessclock
 #: lib/pychess/widgets/ChessClock.py:15
 msgid "White"
 msgstr "Brancas"
 
-# In the chessclock
 #: lib/pychess/widgets/ChessClock.py:15
 msgid "Black"
 msgstr "Pretas"
 
-# Means that the filechooser shows all files
 #: lib/pychess/widgets/ionest.py:47
 msgid "All Files"
 msgstr "Todos os arquivos"
 
-# Means that the savedialog tries to figure out the fileformat based on its extension.
 #: lib/pychess/widgets/ionest.py:50
 msgid "Detect type automatically"
 msgstr "Detectar formato automaticamente"
 
-# Means that the filechooser shows all chessfiles
 #: lib/pychess/widgets/ionest.py:53
 msgid "All Chess Files"
 msgstr "Arquivos de xadrez"
@@ -484,7 +462,6 @@ msgstr "<big><b>Existem %d partidas com mudanças não salvas:</b></big>"
 msgid "Opening Book"
 msgstr "Aberturas"
 
-# This string shouldn't be to wide, as it is placed in the sidepanel, when no moves are found in the book.
 #: sidepanel/bookPanel.py:50
 msgid ""
 "In this position,\n"
@@ -497,7 +474,6 @@ msgstr ""
 msgid "Move History"
 msgstr "Movimentos"
 
-# This is the sidepanel tab showing the score-graph
 #: sidepanel/scorePanel.py:94
 msgid "Score"
 msgstr "Pontuação"
