@@ -3,9 +3,12 @@ import webbrowser
 import math
 import atexit
 import signal
+from StringIO import StringIO
 
 import pango, gobject, gtk
 
+from pychess import Variants
+from pychess.Savers import *
 from pychess.System import conf, gstreamer, glock, uistuff
 from pychess.System.prefix import addDataPrefix
 from pychess.System.Log import log
@@ -28,6 +31,7 @@ from pychess.widgets.Background import TaskerManager
 from pychess.widgets.Background import NewGameTasker
 from pychess.widgets.Background import InternetGameTasker
 from pychess.ic import ICLogon
+
 
 ################################################################################
 # gameDic - containing the gamewidget:gamemodel of all open games              #
@@ -349,8 +353,17 @@ class GladeHandlers:
     #          Taskers        #
     
     def on_newGameTasker_started (tasker, color, opponent, difficulty):
-        gamemodel = GameModel(TimeModel(5*60, 0)) #, VARIANT_960)
-        
+        # TODO: temporary hack for testing different chess variants
+        #variant = Variants.NormalChess
+        #variant = Variants.FischerRandomChess
+        variant = Variants.ShuffleChess
+        gamemodel = GameModel(TimeModel(5*60, 0), variant)
+
+        if variant in (Variants.FischerRandomChess, Variants.ShuffleChess):
+            data = (StringIO(gamemodel.boards[0].asFen()), fen, 0, 0)
+        else:
+            data = None
+
         player0tup = (LOCAL, Human, (color, ""), _("Human"))
         if opponent == 0:
             player1tup = (LOCAL, Human, (1-color, ""), _("Human"))
@@ -361,8 +374,8 @@ class GladeHandlers:
                     (engine, 1-color, difficulty, 5*60, 0), name)
         
         if color == WHITE:
-            ionest.generalStart(gamemodel, player0tup, player1tup)
-        else: ionest.generalStart(gamemodel, player1tup, player0tup)
+            ionest.generalStart(gamemodel, player0tup, player1tup, data)
+        else: ionest.generalStart(gamemodel, player1tup, player0tup, data)
     
     def on_internetTasker_connect (tasker, asGuest, username, password):
         ICLogon.run()

@@ -536,6 +536,7 @@ class CECPEngine (ProtocolEngine):
     
     def newGame (self):
         if self.ready:
+            print "newGame"
             print >> self.engine, "new"
             print >> self.engine, "random"
         else:

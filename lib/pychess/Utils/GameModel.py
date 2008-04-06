@@ -12,6 +12,7 @@ from pychess.System.ThreadPool import pool, PooledThread
 from pychess.System.protoopen import protoopen, protosave, isWriteable
 from pychess.System.Log import log
 from pychess.System import glock
+from pychess import Variants
 
 from Board import Board
 from logic import getStatus, isClaimableDraw
@@ -33,11 +34,11 @@ class GameModel (GObject, PooledThread):
         "action_error":  (SIGNAL_RUN_FIRST, TYPE_NONE, (object, int))
     }
     
-    def __init__ (self, timemodel=None, variant=VARIANT_STANDARD):
+    def __init__ (self, timemodel=None, variant=Variants.NormalChess):
         GObject.__init__(self)
-        
+
         self.variant = variant
-        self.boards = [Board(setup=True)]
+        self.boards = [variant.board(setup=True)]
 
         self.moves = []
         self.players = []

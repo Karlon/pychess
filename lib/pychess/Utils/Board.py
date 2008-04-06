@@ -54,7 +54,7 @@ class Board:
                 self.data[RANK(cord)][FILE(cord)] = Piece(BLACK, QUEEN)
             if self.board.kings[BLACK] != -1:
                 self[Cord(self.board.kings[BLACK])] = Piece(BLACK, KING)
-    
+
     def move (self, move):
         
         assert self[move.cord0], "%s %s" % (move, self.asFen())
@@ -68,6 +68,17 @@ class Board:
         newBoard[cord1] = newBoard[cord0]
         newBoard[cord0] = None
         
+        self.move_castling_rook(flag, newBoard)
+                
+        if flag in PROMOTIONS:
+            newBoard[cord1] = Piece(self.color, PROMOTE_PIECE(flag))
+        
+        elif flag == ENPASSANT:
+            newBoard[Cord(cord1.x, cord0.y)] = None
+        
+        return newBoard
+
+    def move_castling_rook(self, flag, newMove):
         if self.color == WHITE:
             if flag == QUEEN_CASTLE:
                 newBoard[Cord(D1)] = newBoard[Cord(A1)]
@@ -83,14 +94,6 @@ class Board:
                 newBoard[Cord(F8)] = newBoard[Cord(H8)]
                 newBoard[Cord(H8)] = None
         
-        if flag in PROMOTIONS:
-            newBoard[cord1] = Piece(self.color, PROMOTE_PIECE(flag))
-        
-        elif flag == ENPASSANT:
-            newBoard[Cord(cord1.x, cord0.y)] = None
-        
-        return newBoard
-    
     def willLeaveInCheck (self, move):
         self.board.lock.acquire()
         try:

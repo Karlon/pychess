@@ -5,6 +5,7 @@ from pychess.Utils.const import *
 from pychess.System.Log import log
 from pychess.Utils.logic import getStatus
 from pychess.Utils.Board import Board
+from pychess import Variants
 
 from ChessFile import ChessFile, LoadingError
 
@@ -37,10 +38,10 @@ def save (file, model):
     print >> file, '[Black "%s"]' % repr(model.players[BLACK])
     print >> file, '[Result "%s"]' % status
     
-    if model.variant == VARIANT_960:
+    if isinstance(model.variant, FischerRandomChess):
         print >> file, '[Variant "Fischerandom"]'
         
-    if model.lowply > 0 or model.variant == VARIANT_960:
+    if model.lowply > 0 or isinstance(model.variant, FischerRandomChess):
         print >> file, '[SetUp "1"]'
         print >> file, '[FEN "%s"]' % model.boards[0].asFen()
     
