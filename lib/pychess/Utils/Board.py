@@ -78,7 +78,7 @@ class Board:
         
         return newBoard
 
-    def move_castling_rook(self, flag, newMove):
+    def move_castling_rook(self, flag, newBoard):
         if self.color == WHITE:
             if flag == QUEEN_CASTLE:
                 newBoard[Cord(D1)] = newBoard[Cord(A1)]
