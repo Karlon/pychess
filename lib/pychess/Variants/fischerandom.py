@@ -32,6 +32,7 @@ class FRCBoard(NormalBoard):
 
 
 class FischerRandomChess:
+    name = _("Fischer Random")
     board = FRCBoard
 
 

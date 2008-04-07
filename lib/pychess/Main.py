@@ -7,7 +7,6 @@ from StringIO import StringIO
 
 import pango, gobject, gtk
 
-from pychess import Variants
 from pychess.Savers import *
 from pychess.System import conf, gstreamer, glock, uistuff
 from pychess.System.prefix import addDataPrefix
@@ -353,16 +352,7 @@ class GladeHandlers:
     #          Taskers        #
     
     def on_newGameTasker_started (tasker, color, opponent, difficulty):
-        # TODO: temporary hack for testing different chess variants
-        #variant = Variants.NormalChess
-        #variant = Variants.FischerRandomChess
-        variant = Variants.ShuffleChess
-        gamemodel = GameModel(TimeModel(5*60, 0), variant)
-
-        if variant in (Variants.FischerRandomChess, Variants.ShuffleChess):
-            data = (StringIO(gamemodel.boards[0].asFen()), fen, 0, 0)
-        else:
-            data = None
+        gamemodel = GameModel(TimeModel(5*60, 0))
 
         player0tup = (LOCAL, Human, (color, ""), _("Human"))
         if opponent == 0:

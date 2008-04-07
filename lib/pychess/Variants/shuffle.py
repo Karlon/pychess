@@ -15,6 +15,7 @@ class ShuffleBoard(NormalBoard):
 
 
 class ShuffleChess:
+    name = _("Shuffle")
     board = ShuffleBoard
 
 
@@ -26,10 +27,18 @@ def shuffle_start():
     
     tmp = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
     random.shuffle(tmp)
-    tmp = ''.join(tmp)
-    tmp = tmp + '/pppppppp/8/8/8/8/PPPPPPPP/' + tmp.upper() + ' w KQkq - 0 1'
     
-    # TODO: adjust castling
+    if tmp[4] == 'k' and tmp[0] == 'r' and tmp[7] == 'r':
+        castling = 'KQkq'
+    elif tmp[4] == 'k' and tmp[0] == 'r':
+        castling = 'Qq'
+    elif tmp[4] == 'k' and tmp[7] == 'r':
+        castling = 'Kk'
+    else:
+        castling = '-'
+
+    tmp = ''.join(tmp)
+    tmp = tmp + '/pppppppp/8/8/8/8/PPPPPPPP/' + tmp.upper() + ' w ' + castling + ' - 0 1'
     
     return tmp
 

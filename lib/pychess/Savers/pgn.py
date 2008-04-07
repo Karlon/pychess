@@ -129,8 +129,8 @@ class PGNFile (ChessFile):
     def loadToModel (self, gameno, position, model=None):
         if not model: model = GameModel()
 
-        variant = self._getTag(gameno, "Variant")
-        if variant and (variant == "Fischerandom" or "960" in variant):
+        variant = self._getTag(gameno, "Variant").lower()
+        if variant and ("fischer" in variant or "960" in variant):
             model.variant = VARIANT_960
         
         fenstr = self._getTag(gameno, "FEN")

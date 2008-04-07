@@ -10,6 +10,7 @@ try:
 except ImportError:
     from gtksourceview2 import *
 
+from pychess.Savers import *
 from pychess.Utils.GameModel import GameModel
 from pychess.Utils.TimeModel import TimeModel
 from pychess.Utils.const import *
@@ -20,6 +21,7 @@ from pychess.Players.Human import Human
 from pychess.widgets import BoardPreview
 from pychess.widgets import ionest
 from pychess.Savers import pgn
+from pychess import Variants 
 
 # We init players here, to have a better balance between application and dialog
 # startup time.
@@ -34,6 +36,10 @@ image = it.load_icon("stock_notebook", 24, gtk.ICON_LOOKUP_USE_BUILTIN)
 
 for engine in discoverer.getEngines().values():
     playerItems += [(image, discoverer.getName(engine), "stock_notebook")]
+
+variantItems = []
+for variantClass in Variants.variants:
+    variantItems += [(image, variantClass.name, "stock_notebook")]
 
 difItems = []
 for level, stock, altstock in \
@@ -64,6 +70,9 @@ class _GameInitializationMode:
     @classmethod
     def _init (cls):
         cls.widgets = uistuff.GladeWidgets ("newInOut.glade")
+
+        combo = cls.widgets["variant"]
+        uistuff.createCombo(combo, [i[:2] for i in variantItems])
         
         for combo in (cls.widgets["whiteDifficulty"], cls.widgets["blackDifficulty"]):
             uistuff.createCombo(combo, [i[:2] for i in difItems])
@@ -87,12 +96,14 @@ class _GameInitializationMode:
                 "changed", on_playerCombobox_changed, "white")
         cls.widgets["blackPlayerCombobox"].connect(
                 "changed", on_playerCombobox_changed, "black")
+
+        cls.widgets["variant"].set_active(0)
         
         cls.widgets["whitePlayerCombobox"].set_active(0)
         cls.widgets["blackPlayerCombobox"].set_active(1)
         on_playerCombobox_changed (cls.widgets["blackPlayerCombobox"], "black")
         
-        for key in ("whitePlayerCombobox", "blackPlayerCombobox", "whiteDifficulty",
+        for key in ("variant", "whitePlayerCombobox", "blackPlayerCombobox", "whiteDifficulty",
                 "blackDifficulty", "spinbuttonH", "spinbuttonM", "spinbuttonS",
                 "spinbuttonG", "useTimeCB"):
             uistuff.keep(cls.widgets[key], key)
@@ -108,6 +119,10 @@ class _GameInitializationMode:
             cls.widgets["newgamedialog"].disconnect(handlerId)
             if res != gtk.RESPONSE_OK:
                 return 
+            
+            # Find variant
+            variant = cls.widgets["variant"].get_active()
+            variant = Variants.variants[variant]
             
             # Find time
             if cls.widgets["useTimeCB"].get_active():
@@ -140,9 +155,15 @@ class _GameInitializationMode:
             if secs > 0:
                 timemodel = TimeModel (secs, incr)
             else: timemodel = None
-            gamemodel = GameModel (timemodel)
+            gamemodel = GameModel (timemodel, variant)
+
+            # TODO PyChess doesn't handle "new" yet, so we force 'setboard'
+            if variant in (Variants.FischerRandomChess, Variants.ShuffleChess):
+                data = (StringIO(gamemodel.boards[0].asFen()), fen, 0, 0)
+            else:
+                data = None
             
-            callback((gamemodel, playertups[0], playertups[1]))
+            callback((gamemodel, playertups[0], playertups[1], data))
         
         handlerId = cls.widgets["newgamedialog"].connect("response", onResponse)
         cls.widgets["newgamedialog"].show()
