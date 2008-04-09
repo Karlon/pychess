@@ -14,7 +14,7 @@ class FRCBoard(NormalBoard):
         else:
             NormalBoard.__init__(self, setup=setup)
 
-    def move_castling_rook(self, flag, newMove):
+    def move_castling_rook(self, flag, newBoard):
         if self.color == WHITE:
             if flag == QUEEN_CASTLE:
                 newBoard[Cord(D1)] = newBoard[Cord(A1)]

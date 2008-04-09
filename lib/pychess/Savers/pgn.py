@@ -38,10 +38,10 @@ def save (file, model):
     print >> file, '[Black "%s"]' % repr(model.players[BLACK])
     print >> file, '[Result "%s"]' % status
     
-    if isinstance(model.variant, FischerRandomChess):
+    if isinstance(model.variant, Variants.FischerRandomChess):
         print >> file, '[Variant "Fischerandom"]'
         
-    if model.lowply > 0 or isinstance(model.variant, FischerRandomChess):
+    if model.lowply > 0 or isinstance(model.variant, Variants.FischerRandomChess):
         print >> file, '[SetUp "1"]'
         print >> file, '[FEN "%s"]' % model.boards[0].asFen()
     
@@ -131,7 +131,7 @@ class PGNFile (ChessFile):
 
         variant = self._getTag(gameno, "Variant").lower()
         if variant and ("fischer" in variant or "960" in variant):
-            model.variant = VARIANT_960
+            model.variant = Variants.FischerRandomChess
         
         fenstr = self._getTag(gameno, "FEN")
         if fenstr:
