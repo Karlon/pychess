@@ -20,14 +20,14 @@ else:
 hpadding = 5
 vpadding = 3
 
-class SpotGraph (gtk.DrawingArea):
+class SpotGraph (gtk.EventBox):
     
     __gsignals__ = {
         'spotClicked' : (SIGNAL_RUN_FIRST, TYPE_NONE, (str,))
     }
     
     def __init__ (self):
-        gtk.DrawingArea.__init__(self)
+        gtk.EventBox.__init__(self)
         self.connect("expose_event", self.expose)
         
         self.typeColors = [[[85, 152, 215], [59, 106, 151]],
@@ -46,7 +46,7 @@ class SpotGraph (gtk.DrawingArea):
         self.connect("button_press_event", self.button_press)
         self.connect("button_release_event", self.button_release)
         self.connect("motion_notify_event", self.motion_notify)
-        self.connect("leave_notify_event", self.leave_notify)
+        self.connect("leave_notify_event", self.motion_notify)
         
         self.cords = []
         self.hovered = None
@@ -55,6 +55,7 @@ class SpotGraph (gtk.DrawingArea):
         
         self.xmarks = []
         self.ymarks = []
+        self.set_visible_window(False)
     
     ############################################################################
     # Drawing                                                                  #
@@ -79,7 +80,7 @@ class SpotGraph (gtk.DrawingArea):
         width = alloc.width
         height = alloc.height
         
-        context.move_to(line, line)
+        context.move_to(alloc.x+line, alloc.y+line)
         context.rel_line_to(0, height-line*2-curve)
         context.rel_curve_to(0, curve,  0, curve,  curve, curve)
         context.rel_line_to(width-line*2-curve, 0)
@@ -94,11 +95,11 @@ class SpotGraph (gtk.DrawingArea):
             #context.set_source_rgba(0, 0, 0, 0.7)
             context.set_font_size(12)
             x, y = self.transCords (0, y)
-            context.move_to (x+line/2., y+line/2.)
+            context.move_to (alloc.x+x+line/2., alloc.y+y+line/2.)
             context.show_text(title)
             
             context.set_source_color(self.get_style().bg[self.state])
-            context.move_to (x, y-line/2.)
+            context.move_to (alloc.x+x, alloc.y+y-line/2.)
             context.rel_curve_to (0, 6,  -line, 6,  -line, 6)
             context.rel_curve_to (line, 0,  line, 6,  line, 6)
             context.close_path()
@@ -109,13 +110,13 @@ class SpotGraph (gtk.DrawingArea):
             #context.set_source_rgba(0, 0, 0, 0.7)
             context.set_font_size(12)
             x, y = self.transCords (x, 1)
-            context.move_to (x+line/2., y)
+            context.move_to (alloc.x+x+line/2., alloc.y+y)
             context.rotate(-math.pi/2)
             context.show_text(title)
             context.rotate(math.pi/2)
             
             context.set_source_color(self.get_style().bg[self.state])
-            context.move_to (x-line/2., y+line/2.)
+            context.move_to (alloc.x+x-line/2., alloc.y+y+line/2.)
             context.rel_curve_to (6, 0,  6, line,  6, line)
             context.rel_curve_to (0, -line,  6, -line,  6, -line)
             context.close_path()
@@ -128,7 +129,7 @@ class SpotGraph (gtk.DrawingArea):
                 continue
             
             x, y = self.transCords (x, y)
-            context.arc(x, y, dotSmall/2., 0, 2 * math.pi)
+            context.arc(alloc.x+x, alloc.y+y, dotSmall/2., 0, 2 * math.pi)
             context.fill_preserve()
             context.set_source_rgb(*self.typeColors[type][1])
             context.stroke()
@@ -141,17 +142,17 @@ class SpotGraph (gtk.DrawingArea):
                 context.set_source_rgb(*self.typeColors[type][0])
             else:
                 context.set_source_rgb(*self.typeColors[type][1])
-            context.arc(x, y, dotLarge/2., 0, 2 * math.pi)
+            context.arc(alloc.x+x, alloc.y+y, dotLarge/2., 0, 2 * math.pi)
             context.fill_preserve()
             context.set_source_rgb(*self.typeColors[type][1])
             context.stroke()
             
             x, y, width, height = self.getTextBounds(self.hovered)
-            context.rectangle(x-hpadding, y-vpadding,
+            context.rectangle(alloc.x+x-hpadding, alloc.y+y-vpadding,
                              width+hpadding*2, height+vpadding*2)
             context.set_source_color(bg)
             context.fill()
-            context.move_to(x, y)
+            context.move_to(alloc.x+x, alloc.y+y)
             context.set_source_rgb(0,0,0)
             context.show_layout(self.create_pango_layout(text))
             
@@ -164,14 +165,12 @@ class SpotGraph (gtk.DrawingArea):
         self.pressed = True
         if self.hovered:
             self.redraw_canvas(self.getBounds(self.hovered))
-            #self.redraw_canvas()
     
     def button_release (self, widget, event):
         self.cords = [event.x, event.y]
         self.pressed = False
         if self.hovered:
             self.redraw_canvas(self.getBounds(self.hovered))
-            #self.redraw_canvas()
             if self.pointIsOnSpot (event.x, event.y, self.hovered):
                 self.emit("spotClicked", self.hovered[3])
     
@@ -183,20 +182,10 @@ class SpotGraph (gtk.DrawingArea):
         if self.hovered:
             bounds = self.getBounds(self.hovered)
             self.hovered = None
-            #self.redraw_canvas()
             self.redraw_canvas(bounds)
         if spot:
             self.hovered = spot
             self.redraw_canvas(self.getBounds(self.hovered))
-            #self.redraw_canvas()
-    
-    def leave_notify (self, widget, event):
-        del self.cords[:]
-        if self.hovered:
-            bounds = self.getBounds(self.hovered)
-            self.hovered = None
-            self.redraw_canvas(bounds)
-            #self.redraw_canvas()
     
     ############################################################################
     # Interaction                                                              #
@@ -289,9 +278,6 @@ class SpotGraph (gtk.DrawingArea):
         """ This method performs a spircal search for an empty square to put a
             new dot. """
         
-        # FIXME: This spiral search is squared, which means it it not very
-        # suitable for circles
-         
         #  49 26 27 28 29 30 31
         #  48 25  9 10 11 12 32
         #  47 24  8  1  2 13 33
