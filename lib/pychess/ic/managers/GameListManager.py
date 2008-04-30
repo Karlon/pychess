@@ -73,16 +73,16 @@ class GameListManager (GObject):
         
         print >> self.connection.client, "iset seekinfo 1"
         print >> self.connection.client, "iset seekremove 1"
-        print >> self.connection.client, "set seek 1"
+        #print >> self.connection.client, "set seek 1"
         
-        print >> self.connection.client, "set gin 1"
+        #print >> self.connection.client, "set gin 1"
         print >> self.connection.client, "iset allresults 0"
         print >> self.connection.client, "games /sbl"
         
         print >> self.connection.client, "who a"
-        print >> self.connection.client, "set availmax 0"
-        print >> self.connection.client, "set availmin 0"
-        print >> self.connection.client, "set availinfo 1"
+        #print >> self.connection.client, "set availmax 0"
+        #print >> self.connection.client, "set availmin 0"
+        #print >> self.connection.client, "set availinfo 1"
         
         print >> self.connection.client, "stored"
         
@@ -91,11 +91,11 @@ class GameListManager (GObject):
     def stop (self, connection):
         print >> self.connection.client, "iset seekinfo 0"
         print >> self.connection.client, "iset seekremove 0"
-        print >> self.connection.client, "set seek 0"
+        #print >> self.connection.client, "set seek 0"
         
-        print >> self.connection.client, "set gin 0"
+        #print >> self.connection.client, "set gin 0"
         
-        print >> self.connection.client, "set availinfo 0"
+        #print >> self.connection.client, "set availinfo 0"
     
     ###
     
