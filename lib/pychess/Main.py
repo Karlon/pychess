@@ -428,7 +428,7 @@ class PyChess:
         def callback (window, *args):
             window.disconnect(handle_id)
             loadPosition(window)
-            window.set_size_request(-1, -1)
+            gobject.idle_add(window.set_size_request, -1, -1)
         handle_id = window.connect("size-allocate", callback)
     
     def initGlade(self):
