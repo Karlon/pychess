@@ -430,13 +430,13 @@ class ChallengeTabSection (ParrentListSection):
 # Initialize Seek Graph                                                #
 ########################################################################
 
-YMARKS = (600, 1200, 1800, 2400)
-YLOCATION = lambda y: y/3000.
-XMARKS = (3, 6, 12, 24)
-XLOCATION = lambda x: e**(-5./x)
+YMARKS = (800, 1600, 2400)
+YLOCATION = lambda y: min(y/3000.,3000)
+XMARKS = (5, 15)
+XLOCATION = lambda x: e**(-6.579/(x+1))
 
 # This is used to convert increment time to minutes. With a GAME_LENGTH on
-# 40, a game on two minutes and twelve secconds will be placed at the same
+# 40, a game on two minutes and twelve seconds will be placed at the same
 # X location as a game on 2+12*40/60 = 10 minutes
 GAME_LENGTH = 40
 
