@@ -17,18 +17,18 @@ class FRCBoard(NormalBoard):
     def move_castling_rook(self, flag, newBoard):
         if self.color == WHITE:
             if flag == QUEEN_CASTLE:
-                newBoard[Cord(D1)] = newBoard[Cord(A1)]
-                newBoard[Cord(A1)] = None
+                newBoard[Cord(D1)] = newBoard[Cord(self.ini_rooks[0][0])]
+                newBoard[Cord(self.ini_rooks[0][0])] = None
             elif flag == KING_CASTLE:
-                newBoard[Cord(F1)] = newBoard[Cord(H1)]
-                newBoard[Cord(H1)] = None
+                newBoard[Cord(F1)] = newBoard[Cord(self.ini_rooks[0][1])]
+                newBoard[Cord(self.ini_rooks[0][1])] = None
         else:
             if flag == QUEEN_CASTLE:
-                newBoard[Cord(D8)] = newBoard[Cord(A8)]
-                newBoard[Cord(A8)] = None
+                newBoard[Cord(D8)] = newBoard[Cord(self.ini_rooks[1][0])]
+                newBoard[Cord(self.ini_rooks[1][0])] = None
             elif flag == KING_CASTLE:
-                newBoard[Cord(F8)] = newBoard[Cord(H8)]
-                newBoard[Cord(H8)] = None
+                newBoard[Cord(F8)] = newBoard[Cord(self.ini_rooks[1][1])]
+                newBoard[Cord(self.ini_rooks[1][1])] = None
 
 
 class FischerRandomChess:

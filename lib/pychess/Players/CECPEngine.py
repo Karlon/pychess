@@ -13,6 +13,8 @@ from pychess.Utils.const import *
 from pychess.System.Log import log
 from pychess.System.SubProcess import TimeOutError, SubProcessError
 from pychess.System.ThreadPool import pool
+from pychess.Variants import NormalChess, ShuffleChess, FischerRandomChess
+
 
 def isdigits (strings):
     for s in strings:
@@ -416,6 +418,9 @@ class CECPEngine (ProtocolEngine):
             if self.ready:
                 self.force()
                 if gamemodel.boards[0].asFen() != FEN_START:
+                    if "fischerandom" in self.features["variants"] and \
+                            gamemodel.variant == FischerRandomChess:
+                        print >> self.engine, "variant", "fischerandom"
                     self._setBoard(gamemodel.boards[0])
                 
                 for board, move in zip(gamemodel.boards[:-1], gamemodel.moves):

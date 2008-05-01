@@ -10,7 +10,6 @@ try:
 except ImportError:
     from gtksourceview2 import *
 
-from pychess.Savers import *
 from pychess.Utils.GameModel import GameModel
 from pychess.Utils.TimeModel import TimeModel
 from pychess.Utils.const import *
@@ -155,15 +154,10 @@ class _GameInitializationMode:
             if secs > 0:
                 timemodel = TimeModel (secs, incr)
             else: timemodel = None
+
             gamemodel = GameModel (timemodel, variant)
 
-            # TODO PyChess doesn't handle "new" yet, so we force 'setboard'
-            if variant in (Variants.FischerRandomChess, Variants.ShuffleChess):
-                data = (StringIO(gamemodel.boards[0].asFen()), fen, 0, 0)
-            else:
-                data = None
-            
-            callback((gamemodel, playertups[0], playertups[1], data))
+            callback((gamemodel, playertups[0], playertups[1]))
         
         handlerId = cls.widgets["newgamedialog"].connect("response", onResponse)
         cls.widgets["newgamedialog"].show()

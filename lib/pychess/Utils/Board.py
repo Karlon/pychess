@@ -18,7 +18,7 @@ class Board:
     
     def __init__ (self, setup=False):
         self.data = [[None]*8 for i in xrange(8)]
-        self.board = LBoard()
+        self.board = LBoard(self)
         
         if setup:
             if setup == True:
@@ -143,7 +143,7 @@ class Board:
     
     def clone (self):
         fenstr = self.asFen()
-        lboard = LBoard()
+        lboard = LBoard(self)
         lboard.applyFen (fenstr)
         lboard.history = copy(self.board.history)
         

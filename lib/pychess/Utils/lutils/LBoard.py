@@ -48,7 +48,8 @@ STRICT_FEN = False
 ################################################################################
 
 class LBoard:
-    def __init__ (self):
+    def __init__ (self, boardVariant):
+        self.boardVariant = boardVariant
         self._reset()
     
     def _reset (self):
@@ -329,11 +330,27 @@ class LBoard:
         
         if flag in (KING_CASTLE, QUEEN_CASTLE):
             if flag == QUEEN_CASTLE:
-                rookf = fcord - 4
-                rookt = fcord - 1
+                if isinstance(self.boardVariant, FRCBoard):
+                    if self.color == WHITE:
+                        rookf = Cord(self.ini_rooks[0][0])
+                        rookt = Cord(D1)
+                    else:
+                        rookf = Cord(self.ini_rooks[1][0])
+                        rookt = Cord(D8)
+                else:
+                    rookf = fcord - 4
+                    rookt = fcord - 1
             else:
-                rookf = fcord + 3
-                rookt = fcord + 1
+                if isinstance(self.boardVariant, FRCBoard):
+                    if self.color == WHITE:
+                        rookf = Cord(self.ini_rooks[0][1])
+                        rookt = Cord(F1)
+                    else:
+                        rookf = Cord(self.ini_rooks[1][1])
+                        rookt = Cord(F8)
+                else:
+                    rookf = fcord + 3
+                    rookt = fcord + 1
             self._move (rookf, rookt, ROOK, self.color)
             self.hasCastled[self.color] = True
         

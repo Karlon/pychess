@@ -19,6 +19,7 @@ from pychess.Utils.lutils import lsearch
 from pychess.Utils.lutils.lmove import toSAN, parseAny, parseSAN, FLAG, listToSan
 from pychess.Utils.lutils.LBoard import LBoard
 from pychess.Utils.lutils import leval
+from pychess.Variants import NormalChess, ShuffleChess, FischerRandomChess
 
 try:
     import psyco
@@ -68,7 +69,7 @@ forced = False
 analyzing = False
 scr = 0 # The current predicted score. Used when accepting draw offers
 
-board = LBoard()
+board = LBoard(NormalChess)
 board.applyFen(FEN_START)
 
 #import time
@@ -411,6 +412,10 @@ while True:
     elif lines[0] == "random":
         leval.random = True
     
+    elif lines[0] == "variant":
+        if lines[1] == "fischerandom":
+            board.variant = FischerRandomChess
+        
     elif lines[0] == "setboard":
         lsearch.searching = False
         searchLock.acquire()

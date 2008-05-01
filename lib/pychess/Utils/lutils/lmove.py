@@ -3,7 +3,6 @@
 import re
 
 from ldata import *
-from LBoard import LBoard
 from validator import validateMove
 from pychess.Utils.const import *
 
