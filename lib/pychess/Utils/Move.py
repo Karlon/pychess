@@ -5,6 +5,7 @@ from pychess.Utils.Cord import Cord
 from pychess.Utils.const import *
 from lutils import lmove
 from lutils.lmove import ParsingError, FLAG_PIECE
+from pychess.Variants.fischerandom import FRCBoard
 
 class Move:
     
@@ -34,10 +35,16 @@ class Move:
                 self.flag = FLAG_PIECE(promotion)
             
             elif board[self.cord0].piece == KING:
-                if self.cord0.x - self.cord1.x == 2:
-                    self.flag = QUEEN_CASTLE
-                elif self.cord0.x - self.cord1.x == -2:
-                    self.flag = KING_CASTLE
+                if isinstance(board.boardVariant, FRCBoard):
+                    if board.ini_rooks[board.color][0] == self.cord1:
+                        self.flag = QUEEN_CASTLE
+                    elif board.ini_rooks[board.color][1] == self.cord1:
+                        self.flag = KING_CASTLE
+                else:
+                    if self.cord0.x - self.cord1.x == 2:
+                        self.flag = QUEEN_CASTLE
+                    elif self.cord0.x - self.cord1.x == -2:
+                        self.flag = KING_CASTLE
             
             elif board[self.cord0].piece == PAWN and \
                     board[self.cord1] == None and \

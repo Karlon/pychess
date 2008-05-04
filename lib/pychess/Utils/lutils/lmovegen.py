@@ -3,6 +3,7 @@ from bitboard import *
 from attack import *
 from pychess.Utils.const import *
 from lmove import newMove
+from pychess.Variants.fischerandom import FRCBoard
 
 def newPromotes (fromcord, tocord):
     for p in PROMOTIONS:
@@ -194,7 +195,17 @@ def genAllMoves (board):
             not isAttacked (board, D1, BLACK) and \
             not isAttacked (board, C1, BLACK):
                 yield newMove (E1, C1, QUEEN_CASTLE)
-    
+        print board.boardVariant
+        if isinstance(board.boardVariant, FRCBoard) and board.castling & W_OO:
+            if board.ini_kings[WHITE] == B1 and fromToRay[B1][G1] & blocker and \
+                not isAttacked (board, B1, BLACK) and \
+                not isAttacked (board, C1, BLACK) and \
+                not isAttacked (board, D1, BLACK) and \
+                not isAttacked (board, E1, BLACK) and \
+                not isAttacked (board, F1, BLACK) and \
+                not isAttacked (board, G1, BLACK):
+                    yield newMove (B1, G1, KING_CASTLE)
+            
     else:
         if board.castling & B_OO and not fromToRay[E8][G8] & blocker and \
             not isAttacked (board, E8, WHITE) and \
