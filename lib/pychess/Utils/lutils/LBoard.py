@@ -330,24 +330,24 @@ class LBoard:
         
         if flag in (KING_CASTLE, QUEEN_CASTLE):
             if flag == QUEEN_CASTLE:
-                if isinstance(self.boardVariant, FRCBoard):
+                if self.boardVariant.variant == FISCHERRANDOMCHESS:
                     if self.color == WHITE:
-                        rookf = Cord(self.ini_rooks[0][0])
-                        rookt = Cord(D1)
+                        rookf = self.ini_rooks[0][0]
+                        rookt = D1
                     else:
-                        rookf = Cord(self.ini_rooks[1][0])
-                        rookt = Cord(D8)
+                        rookf = self.ini_rooks[1][0]
+                        rookt = D8
                 else:
                     rookf = fcord - 4
                     rookt = fcord - 1
             else:
-                if isinstance(self.boardVariant, FRCBoard):
+                if self.boardVariant.variant == FISCHERRANDOMCHESS:
                     if self.color == WHITE:
-                        rookf = Cord(self.ini_rooks[0][1])
-                        rookt = Cord(F1)
+                        rookf = self.ini_rooks[0][1]
+                        rookt = F1
                     else:
-                        rookf = Cord(self.ini_rooks[1][1])
-                        rookt = Cord(F8)
+                        rookf = self.ini_rooks[1][1]
+                        rookt = F8
                 else:
                     rookf = fcord + 3
                     rookt = fcord + 1

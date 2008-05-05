@@ -3,7 +3,7 @@ from bitboard import *
 from attack import *
 from pychess.Utils.const import *
 from lmove import newMove
-from pychess.Variants.fischerandom import FRCBoard
+from pychess.Variants.fischerandom import frc_castling_moves
 
 def newPromotes (fromcord, tocord):
     for p in PROMOTIONS:
@@ -39,7 +39,7 @@ def queenAttack (board, cord):
 ################################################################################
 
 def genAllMoves (board):
-    fischerandom = isinstance(board.boardVariant, FRCBoard)
+    fischerandom = board.boardVariant.variant == FISCHERRANDOMCHESS
     
     blocker = board.blocker
     notblocker = ~blocker
@@ -185,7 +185,7 @@ def genAllMoves (board):
     # Castling
     
     if fischerandom:
-        for move in board.boardVariant.castling_moves(board):
+        for move in frc_castling_moves(board):
             yield move
     else:
         if board.color == WHITE:

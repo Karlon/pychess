@@ -7,15 +7,19 @@ import random
 #import __builtin__
 #__builtin__.__dict__['_'] = lambda s: s
 
-from pychess.Utils.Board import Board as NormalBoard
+from pychess.Utils.const import *
+from pychess.Utils.Board import Board
 
 
-class ShuffleBoard(NormalBoard):
+class ShuffleBoard(Board):
+
+    variant = SHUFFLECHESS
+
     def __init__ (self, setup=False):
         if setup is True:
-            NormalBoard.__init__(self, setup=self.shuffle_start())
+            Board.__init__(self, setup=self.shuffle_start())
         else:
-            NormalBoard.__init__(self, setup=setup)
+            Board.__init__(self, setup=setup)
 
     def shuffle_start(self):
         """ Create a random initial position.

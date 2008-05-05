@@ -14,7 +14,6 @@ from pychess.System.Log import log
 from pychess.System import glock
 from pychess import Variants
 
-from Board import Board
 from logic import getStatus, isClaimableDraw
 from const import *
 

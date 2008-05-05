@@ -5,7 +5,6 @@ from pychess.Utils.Cord import Cord
 from pychess.Utils.const import *
 from lutils import lmove
 from lutils.lmove import ParsingError, FLAG_PIECE
-from pychess.Variants.fischerandom import FRCBoard
 
 class Move:
     
@@ -35,7 +34,8 @@ class Move:
                 self.flag = FLAG_PIECE(promotion)
             
             elif board[self.cord0].piece == KING:
-                if isinstance(board, FRCBoard):
+                if board.variant == FISCHERRANDOMCHESS:
+                    print "KING Move cord0,cord1=", self.cord0, self.cord1
                     if board.ini_rooks[board.color][0] == self.cord1:
                         self.flag = QUEEN_CASTLE
                     elif board.ini_rooks[board.color][1] == self.cord1:

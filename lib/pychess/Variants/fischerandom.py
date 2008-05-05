@@ -8,19 +8,22 @@ import random
 #__builtin__.__dict__['_'] = lambda s: s
 
 from pychess.Utils.const import *
-from pychess.Utils.Board import Board as NormalBoard
+from pychess.Utils.Board import Board
 from pychess.Utils.lutils.bitboard import *
 from pychess.Utils.lutils.attack import *
 
 from pychess.Utils.lutils.lmove import newMove
 
 
-class FRCBoard(NormalBoard):
+class FRCBoard(Board):
+
+    variant = FISCHERRANDOMCHESS
+    
     def __init__ (self, setup=False):
         if setup is True:
-            NormalBoard.__init__(self, setup=self.shuffle_start())
+            Board.__init__(self, setup=self.shuffle_start())
         else:
-            NormalBoard.__init__(self, setup=setup)
+            Board.__init__(self, setup=setup)
 
     def move_castling_rook(self, flag, newBoard):
         if self.color == WHITE:
@@ -77,59 +80,62 @@ class FRCBoard(NormalBoard):
 
         tmp = ''.join(tmp)
         tmp = tmp + '/pppppppp/8/8/8/8/PPPPPPPP/' + tmp.upper() + ' w KQkq - 0 1'
+        # TODO: remove this testline
+        tmp = 'rbbkqnnr/pppppppp/8/8/8/8/PPPPPPPP/RBBKQNNR' + ' w KQkq - 0 1'
 
         return tmp
-
-
-    def castling_moves(self, board):
-        if board.color == WHITE and board.castling & W_OO:
-            blocker = 0 #clearBit(board.blocker, board.ini_rooks[WHITE][1])
-            if board.ini_kings[WHITE] == B1 and not fromToRay[B1][G1] & blocker and \
-                not isAttacked (board, B1, BLACK) and \
-                not isAttacked (board, C1, BLACK) and \
-                not isAttacked (board, D1, BLACK) and \
-                not isAttacked (board, E1, BLACK) and \
-                not isAttacked (board, F1, BLACK) and \
-                not isAttacked (board, G1, BLACK):
-                    yield newMove (B1, G1, KING_CASTLE)
-
-            if board.ini_kings[WHITE] == C1 and not fromToRay[C1][G1] & blocker and \
-                not isAttacked (board, C1, BLACK) and \
-                not isAttacked (board, D1, BLACK) and \
-                not isAttacked (board, E1, BLACK) and \
-                not isAttacked (board, F1, BLACK) and \
-                not isAttacked (board, G1, BLACK):
-                    yield newMove (C1, G1, KING_CASTLE)
-
-            if board.ini_kings[WHITE] == D1 and not fromToRay[D1][G1] & blocker and \
-                not isAttacked (board, D1, BLACK) and \
-                not isAttacked (board, E1, BLACK) and \
-                not isAttacked (board, F1, BLACK) and \
-                not isAttacked (board, G1, BLACK):
-                    yield newMove (D1, G1, KING_CASTLE)
-
-            if board.ini_kings[WHITE] == E1 and not fromToRay[E1][G1] & blocker and \
-                not isAttacked (board, E1, BLACK) and \
-                not isAttacked (board, F1, BLACK) and \
-                not isAttacked (board, G1, BLACK):
-                    yield newMove (E1, G1, KING_CASTLE)
-
-            if board.ini_kings[WHITE] == F1 and not fromToRay[F1][G1] & blocker and \
-                not isAttacked (board, F1, BLACK) and \
-                not isAttacked (board, G1, BLACK):
-                    yield newMove (F1, G1, KING_CASTLE)
-        
-            if board.ini_kings[WHITE] == G1 and not fromToRay[G1][G1] & blocker and \
-                not isAttacked (board, G1, BLACK):
-                    yield newMove (G1, G1, KING_CASTLE)
 
 
 class FischerRandomChess:
     name = _("Fischer Random")
     board = FRCBoard
 
+
+def frc_castling_moves(board):
+    if board.color == WHITE and board.castling & W_OO:
+        # TODO: fixme
+        blocker = 0 #clearBit(board.blocker, board.ini_rooks[WHITE][1])
+        if board.ini_kings[WHITE] == B1 and not fromToRay[B1][G1] & blocker and \
+            not isAttacked (board, B1, BLACK) and \
+            not isAttacked (board, C1, BLACK) and \
+            not isAttacked (board, D1, BLACK) and \
+            not isAttacked (board, E1, BLACK) and \
+            not isAttacked (board, F1, BLACK) and \
+            not isAttacked (board, G1, BLACK):
+                yield newMove (B1, G1, KING_CASTLE)
+
+        if board.ini_kings[WHITE] == C1 and not fromToRay[C1][G1] & blocker and \
+            not isAttacked (board, C1, BLACK) and \
+            not isAttacked (board, D1, BLACK) and \
+            not isAttacked (board, E1, BLACK) and \
+            not isAttacked (board, F1, BLACK) and \
+            not isAttacked (board, G1, BLACK):
+                yield newMove (C1, G1, KING_CASTLE)
+
+        if board.ini_kings[WHITE] == D1 and not fromToRay[D1][G1] & blocker and \
+            not isAttacked (board, D1, BLACK) and \
+            not isAttacked (board, E1, BLACK) and \
+            not isAttacked (board, F1, BLACK) and \
+            not isAttacked (board, G1, BLACK):
+                yield newMove (D1, G1, KING_CASTLE)
+
+        if board.ini_kings[WHITE] == E1 and not fromToRay[E1][G1] & blocker and \
+            not isAttacked (board, E1, BLACK) and \
+            not isAttacked (board, F1, BLACK) and \
+            not isAttacked (board, G1, BLACK):
+                yield newMove (E1, G1, KING_CASTLE)
+
+        if board.ini_kings[WHITE] == F1 and not fromToRay[F1][G1] & blocker and \
+            not isAttacked (board, F1, BLACK) and \
+            not isAttacked (board, G1, BLACK):
+                yield newMove (F1, G1, KING_CASTLE)
+    
+        if board.ini_kings[WHITE] == G1 and not fromToRay[G1][G1] & blocker and \
+            not isAttacked (board, G1, BLACK):
+                yield newMove (G1, G1, KING_CASTLE)
+
     
 if __name__ == '__main__':
-    Board = FRCBoard(True)
+    frcBoard = FRCBoard(True)
     for i in range(10):
-        print Board.shuffle_start()
+        print frcBoard.shuffle_start()

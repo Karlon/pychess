@@ -1,7 +1,7 @@
-from pychess.Utils.Board import Board as NormalBoard
+from pychess.Utils.Board import Board
 
 
 class NormalChess:
     name = _("Normal")
-    board = NormalBoard
+    board = Board
 

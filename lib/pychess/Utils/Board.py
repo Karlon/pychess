@@ -16,6 +16,8 @@ class Board:
         Caveat: As the only objects, the Piece objects in the self.data lists
         will not be cloned, to make animation state preserve between moves """
     
+    variant = NORMALCHESS
+    
     def __init__ (self, setup=False):
         self.data = [[None]*8 for i in xrange(8)]
         self.board = LBoard(self)

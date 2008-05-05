@@ -443,10 +443,11 @@ def parseAN (board, an):
     if len(an) == 5:
         flag = chr2Sign[an[4].lower()] + 2
     elif board.arBoard[fcord] == KING:
-        if isinstance(board.boardVariant, FRCBoard):
-            if board.ini_rooks[board.color][0] == tcord:
+        if board.boardVariant.variant == FISCHERRANDOMCHESS:
+            print 'KING lmove fcord,tcord=', fcord,tcord
+            if (abs(fcord - tcord) > 1 and tcord==C1) or board.ini_rooks[board.color][0] == tcord:
                 flag = QUEEN_CASTLE
-            elif board.ini_rooks[board.color][1] == tcord:
+            elif (abs(fcord - tcord) > 1 and tcord==G1) or board.ini_rooks[board.color][1] == tcord:
                 flag = KING_CASTLE
         else:
             if fcord - tcord == 2:

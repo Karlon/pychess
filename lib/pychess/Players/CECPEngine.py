@@ -13,7 +13,7 @@ from pychess.Utils.const import *
 from pychess.System.Log import log
 from pychess.System.SubProcess import TimeOutError, SubProcessError
 from pychess.System.ThreadPool import pool
-from pychess.Variants import NormalChess, ShuffleChess, FischerRandomChess
+from pychess.Variants.fischerandom import FischerRandomChess
 
 
 def isdigits (strings):
