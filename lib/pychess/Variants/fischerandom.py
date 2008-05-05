@@ -3,14 +3,22 @@
 
 import random
 
-from pychess.Utils.Board import Board as NormalBoard
+# used only for selftesting
+#import __builtin__
+#__builtin__.__dict__['_'] = lambda s: s
+
 from pychess.Utils.const import *
+from pychess.Utils.Board import Board as NormalBoard
+from pychess.Utils.lutils.bitboard import *
+from pychess.Utils.lutils.attack import *
+
+from pychess.Utils.lutils.lmove import newMove
 
 
 class FRCBoard(NormalBoard):
     def __init__ (self, setup=False):
         if setup is True:
-            NormalBoard.__init__(self, setup=shuffle_start())
+            NormalBoard.__init__(self, setup=self.shuffle_start())
         else:
             NormalBoard.__init__(self, setup=setup)
 
@@ -30,55 +38,98 @@ class FRCBoard(NormalBoard):
                 newBoard[Cord(F8)] = newBoard[Cord(self.ini_rooks[1][1])]
                 newBoard[Cord(self.ini_rooks[1][1])] = None
 
+    def shuffle_start(self):
+        """ Create a random initial position.
+            The king is placed somewhere between the two rooks.
+            The bishops are placed on opposite-colored squares."""
+      
+        positions = [1, 2, 3, 4, 5, 6, 7, 8]
+        tmp = [''] * 8
+
+        bishop = random.choice((1, 3, 5, 7))
+        tmp[bishop-1] = 'b'
+        positions.remove(bishop)
+
+        bishop = random.choice((2, 4, 6, 8))
+        tmp[bishop-1] = 'b'
+        positions.remove(bishop)
+
+        queen = random.choice(positions)
+        tmp[queen-1] = 'q'
+        positions.remove(queen)
+
+        knight = random.choice(positions)
+        tmp[knight-1] = 'n'
+        positions.remove(knight)
+
+        knight = random.choice(positions)
+        tmp[knight-1] = 'n'
+        positions.remove(knight)
+
+        rook = positions[0]
+        tmp[rook-1] = 'r'
+
+        king = positions[1]
+        tmp[king-1] = 'k'
+
+        rook = positions[2]
+        tmp[rook-1] = 'r'
+
+        tmp = ''.join(tmp)
+        tmp = tmp + '/pppppppp/8/8/8/8/PPPPPPPP/' + tmp.upper() + ' w KQkq - 0 1'
+
+        return tmp
+
+
+    def castling_moves(self, board):
+        if board.color == WHITE and board.castling & W_OO:
+            blocker = 0 #clearBit(board.blocker, board.ini_rooks[WHITE][1])
+            if board.ini_kings[WHITE] == B1 and not fromToRay[B1][G1] & blocker and \
+                not isAttacked (board, B1, BLACK) and \
+                not isAttacked (board, C1, BLACK) and \
+                not isAttacked (board, D1, BLACK) and \
+                not isAttacked (board, E1, BLACK) and \
+                not isAttacked (board, F1, BLACK) and \
+                not isAttacked (board, G1, BLACK):
+                    yield newMove (B1, G1, KING_CASTLE)
+
+            if board.ini_kings[WHITE] == C1 and not fromToRay[C1][G1] & blocker and \
+                not isAttacked (board, C1, BLACK) and \
+                not isAttacked (board, D1, BLACK) and \
+                not isAttacked (board, E1, BLACK) and \
+                not isAttacked (board, F1, BLACK) and \
+                not isAttacked (board, G1, BLACK):
+                    yield newMove (C1, G1, KING_CASTLE)
+
+            if board.ini_kings[WHITE] == D1 and not fromToRay[D1][G1] & blocker and \
+                not isAttacked (board, D1, BLACK) and \
+                not isAttacked (board, E1, BLACK) and \
+                not isAttacked (board, F1, BLACK) and \
+                not isAttacked (board, G1, BLACK):
+                    yield newMove (D1, G1, KING_CASTLE)
+
+            if board.ini_kings[WHITE] == E1 and not fromToRay[E1][G1] & blocker and \
+                not isAttacked (board, E1, BLACK) and \
+                not isAttacked (board, F1, BLACK) and \
+                not isAttacked (board, G1, BLACK):
+                    yield newMove (E1, G1, KING_CASTLE)
+
+            if board.ini_kings[WHITE] == F1 and not fromToRay[F1][G1] & blocker and \
+                not isAttacked (board, F1, BLACK) and \
+                not isAttacked (board, G1, BLACK):
+                    yield newMove (F1, G1, KING_CASTLE)
+        
+            if board.ini_kings[WHITE] == G1 and not fromToRay[G1][G1] & blocker and \
+                not isAttacked (board, G1, BLACK):
+                    yield newMove (G1, G1, KING_CASTLE)
+
 
 class FischerRandomChess:
     name = _("Fischer Random")
     board = FRCBoard
 
-
-def shuffle_start():
-    """ Create a random initial position.
-        The king is placed somewhere between the two rooks.
-        The bishops are placed on opposite-colored squares."""
-  
-    positions = [1, 2, 3, 4, 5, 6, 7, 8]
-    tmp = [''] * 8
-
-    bishop = random.choice((1, 3, 5, 7))
-    tmp[bishop-1] = 'b'
-    positions.remove(bishop)
-
-    bishop = random.choice((2, 4, 6, 8))
-    tmp[bishop-1] = 'b'
-    positions.remove(bishop)
-
-    queen = random.choice(positions)
-    tmp[queen-1] = 'q'
-    positions.remove(queen)
-
-    knight = random.choice(positions)
-    tmp[knight-1] = 'n'
-    positions.remove(knight)
-
-    knight = random.choice(positions)
-    tmp[knight-1] = 'n'
-    positions.remove(knight)
-
-    rook = positions[0]
-    tmp[rook-1] = 'r'
-
-    king = positions[1]
-    tmp[king-1] = 'k'
-
-    rook = positions[2]
-    tmp[rook-1] = 'r'
-
-    tmp = ''.join(tmp)
-    tmp = tmp + '/pppppppp/8/8/8/8/PPPPPPPP/' + tmp.upper() + ' w KQkq - 0 1'
-
-    return tmp
-
-
+    
 if __name__ == '__main__':
+    Board = FRCBoard(True)
     for i in range(10):
-        print shuffle_start()
+        print Board.shuffle_start()

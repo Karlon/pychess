@@ -35,7 +35,7 @@ class Move:
                 self.flag = FLAG_PIECE(promotion)
             
             elif board[self.cord0].piece == KING:
-                if isinstance(board.boardVariant, FRCBoard):
+                if isinstance(board, FRCBoard):
                     if board.ini_rooks[board.color][0] == self.cord1:
                         self.flag = QUEEN_CASTLE
                     elif board.ini_rooks[board.color][1] == self.cord1:

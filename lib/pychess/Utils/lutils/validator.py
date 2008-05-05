@@ -67,7 +67,7 @@ def validateMove (board, move):
     
     # King moves are also special, especially castling  
     elif fpiece == KING:
-        return true
+        return True
         if color == WHITE:
             if not moveArray[fpiece][fcord] & bitPosArray[tcord] and \
                \

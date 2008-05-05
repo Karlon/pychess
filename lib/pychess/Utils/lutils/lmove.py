@@ -442,10 +442,17 @@ def parseAN (board, an):
     
     if len(an) == 5:
         flag = chr2Sign[an[4].lower()] + 2
-    elif board.arBoard[fcord] == KING and fcord - tcord == 2:
-        flag = QUEEN_CASTLE
-    elif board.arBoard[fcord] == KING and fcord - tcord == -2:
-        flag = KING_CASTLE
+    elif board.arBoard[fcord] == KING:
+        if isinstance(board.boardVariant, FRCBoard):
+            if board.ini_rooks[board.color][0] == tcord:
+                flag = QUEEN_CASTLE
+            elif board.ini_rooks[board.color][1] == tcord:
+                flag = KING_CASTLE
+        else:
+            if fcord - tcord == 2:
+                flag = QUEEN_CASTLE
+            elif fcord - tcord == -2:
+                flag = KING_CASTLE
     elif board.arBoard[fcord] == PAWN and board.arBoard[tcord] == EMPTY and \
             FILE(fcord) != FILE(tcord) and RANK(fcord) != RANK(tcord):
         flag = ENPASSANT
