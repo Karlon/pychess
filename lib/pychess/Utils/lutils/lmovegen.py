@@ -345,6 +345,7 @@ def genCaptures (board):
 ################################################################################
 
 def genNonCaptures (board):
+    fischerandom = board.boardVariant.variant == FISCHERRANDOMCHESS
     
     blocker = board.blocker
     notblocker = ~blocker
@@ -429,7 +430,7 @@ def genNonCaptures (board):
     # Castling
     
     if fischerandom:
-        for move in board.boardVariant.castling_moves(board):
+        for move in frc_castling_moves(board):
             yield move
     else:
         if board.color == WHITE:

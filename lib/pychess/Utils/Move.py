@@ -35,7 +35,6 @@ class Move:
             
             elif board[self.cord0].piece == KING:
                 if board.variant == FISCHERRANDOMCHESS:
-                    print "KING Move cord0,cord1=", self.cord0, self.cord1
                     if (abs(self.cord0.x - self.cord1.x) > 1 and self.cord1.x==C1) or \
                             board.ini_rooks[board.color][0] == self.cord1:
                         self.flag = QUEEN_CASTLE
