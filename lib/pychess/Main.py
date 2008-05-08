@@ -3,11 +3,9 @@ import webbrowser
 import math
 import atexit
 import signal
-from StringIO import StringIO
 
 import pango, gobject, gtk
 
-from pychess.Savers import *
 from pychess.System import conf, gstreamer, glock, uistuff
 from pychess.System.prefix import addDataPrefix
 from pychess.System.Log import log
@@ -30,7 +28,6 @@ from pychess.widgets.Background import TaskerManager
 from pychess.widgets.Background import NewGameTasker
 from pychess.widgets.Background import InternetGameTasker
 from pychess.ic import ICLogon
-
 
 ################################################################################
 # gameDic - containing the gamewidget:gamemodel of all open games              #
@@ -353,7 +350,7 @@ class GladeHandlers:
     
     def on_newGameTasker_started (tasker, color, opponent, difficulty):
         gamemodel = GameModel(TimeModel(5*60, 0))
-
+        
         player0tup = (LOCAL, Human, (color, ""), _("Human"))
         if opponent == 0:
             player1tup = (LOCAL, Human, (1-color, ""), _("Human"))
@@ -408,10 +405,10 @@ class PyChess:
         # In rare cases, gtk throws some gtk_size_allocation error, which is
         # probably a race condition. To avoid the window forgets its size in
         # these cases, we add this extra hook
-        def callback (*args):
+        def callback (window, *args):
             window.disconnect(handle_id)
             loadPosition(window)
-            window.set_size_request(-1, -1)
+            gobject.idle_add(window.set_size_request, -1, -1)
         handle_id = window.connect("size-allocate", callback)
     
     def initGlade(self):

@@ -56,7 +56,6 @@ def parseAny (board, algnot):
     return parseFAN (board, algnot)
 
 def determineAlgebraicNotation (algnot):
-    
     upnot = algnot.upper()
     
     if upnot in ("O-O", "O-O-O", "0-0", "0-0-0"):
@@ -242,7 +241,6 @@ def toSAN (board, move, localRepr=False):
 
 def parseSAN (board, san):
     """ Parse a Short/Abbreviated Algebraic Notation string """
-    
     if len(san) < 2:
         if not san:
             raise ParsingError, (san, _("the move is an empty string"), board.asFen())
@@ -431,6 +429,7 @@ def toAN (board, move):
 
 def parseAN (board, an):
     """ Parse an Algebraic Notation string """
+
     if not 4 <= len(an) <= 5:
         raise ParsingError, (an, "the move must be 4 or 5 chars long", board.asFen())
     
@@ -444,7 +443,6 @@ def parseAN (board, an):
         flag = chr2Sign[an[4].lower()] + 2
     elif board.arBoard[fcord] == KING:
         if board.boardVariant.variant == FISCHERRANDOMCHESS:
-            print 'KING lmove fcord,tcord=', fcord,tcord
             if (abs(fcord - tcord) > 1 and tcord==C1) or board.ini_rooks[board.color][0] == tcord:
                 flag = QUEEN_CASTLE
             elif (abs(fcord - tcord) > 1 and tcord==G1) or board.ini_rooks[board.color][1] == tcord:

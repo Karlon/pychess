@@ -1,4 +1,4 @@
-from pychess.Utils.lutils.lmove import FILE, RANK
+from lutils.lmove import FILE, RANK
 
 class CordFormatException(Exception): pass
 

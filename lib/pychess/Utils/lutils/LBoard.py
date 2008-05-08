@@ -476,11 +476,19 @@ class LBoard:
         if flag in (KING_CASTLE, QUEEN_CASTLE):
             if self.boardVariant.variant == FISCHERRANDOMCHESS:
                 if self.color == WHITE:
-                    rookf = self.ini_rooks[0][0]
-                    rookt = D1
+                    if flag == QUEEN_CASTLE:
+                        rookf = self.ini_rooks[0][0]
+                        rookt = D1
+                    else:
+                        rookf = self.ini_rooks[0][1]
+                        rookt = F1
                 else:
-                    rookf = self.ini_rooks[1][0]
-                    rookt = D8
+                    if flag == QUEEN_CASTLE:
+                        rookf = self.ini_rooks[1][0]
+                        rookt = D8
+                    else:
+                        rookf = self.ini_rooks[1][1]
+                        rookt = F8
             else:
                 if flag == QUEEN_CASTLE:
                     rookf = fcord - 4
