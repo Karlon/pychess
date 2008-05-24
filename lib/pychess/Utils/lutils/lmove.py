@@ -447,11 +447,15 @@ def parseAN (board, an):
                 flag = QUEEN_CASTLE
             elif (abs(fcord - tcord) > 1 and tcord==G1) or board.ini_rooks[board.color][1] == tcord:
                 flag = KING_CASTLE
+            else:
+                flag = NORMAL_MOVE
         else:
             if fcord - tcord == 2:
                 flag = QUEEN_CASTLE
             elif fcord - tcord == -2:
                 flag = KING_CASTLE
+            else:
+                flag = NORMAL_MOVE
     elif board.arBoard[fcord] == PAWN and board.arBoard[tcord] == EMPTY and \
             FILE(fcord) != FILE(tcord) and RANK(fcord) != RANK(tcord):
         flag = ENPASSANT
