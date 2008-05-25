@@ -16,7 +16,9 @@ from pychess import Savers
 from pychess.Savers import *
 from pychess.Savers.ChessFile import LoadingError
 from pychess.widgets import gamewidget
-from pychess import Variants
+from pychess.Variants.normal import NormalChess
+from pychess.Variants.shuffle import ShuffleChess
+from pychess.Variants.fischerandom import FischerRandomChess
 
 
 def generalStart (gamemodel, player0tup, player1tup, loaddata=None):
@@ -117,7 +119,7 @@ def workfunc (worker, gamemodel, player0tup, player1tup, loaddata=None):
     
     # Starting
     if not loaddata:
-        if gamemodel.variant in (Variants.FischerRandomChess, Variants.ShuffleChess):
+        if gamemodel.variant in (FischerRandomChess, ShuffleChess):
             for player in gamemodel.players:
                 player.setBoard(gamemodel)
             for spectactor in gamemodel.spectactors.values():

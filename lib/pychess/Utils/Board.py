@@ -1,4 +1,6 @@
 import sys
+from copy import copy
+
 from lutils.LBoard import LBoard
 from lutils.bitboard import iterBits
 from lutils.lmove import RANK, FILE, FLAG, PROMOTE_PIECE, toAN
@@ -6,7 +8,6 @@ from Piece import Piece
 from Cord import Cord
 from const import *
 
-from copy import copy
 
 class Board:
     """ Board is a thin layer above LBoard, adding the Piece objects, which are
@@ -149,7 +150,11 @@ class Board:
         lboard.applyFen (fenstr)
         lboard.history = copy(self.board.history)
         
-        newBoard = Board()
+        if self.variant == FISCHERRANDOMCHESS:
+            from pychess.Variants.fischerandom import FRCBoard
+            newBoard = FRCBoard()
+        else:
+            newBoard = Board()
         newBoard.board = lboard
         for y, row in enumerate(self.data):
             for x, piece in enumerate(row):

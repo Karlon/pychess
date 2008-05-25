@@ -25,12 +25,15 @@ def validateMove (board, move):
         return False
     
     tcord = move & 63
+    flag = move >> 12
     
     # TO square is a friendly piece, so illegal move  
     if bitPosArray[tcord] & board.friends[color]:
-        return False
-    
-    flag = move >> 12
+        if board.boardVariant.variant == FISCHERRANDOMCHESS:
+            if not flag in (KING_CASTLE, QUEEN_CASTLE):
+                return False
+        else:
+            return False
     
     # If promotion move, piece must be pawn 
     if (flag in PROMOTIONS or flag == ENPASSANT) and fpiece != PAWN:
@@ -67,6 +70,10 @@ def validateMove (board, move):
     
     # King moves are also special, especially castling  
     elif fpiece == KING:
+        if board.boardVariant.variant == FISCHERRANDOMCHESS:
+            # TODO: filter out all invalid castling moves
+            return True
+
         if color == WHITE:
             if not moveArray[fpiece][fcord] & bitPosArray[tcord] and \
                \

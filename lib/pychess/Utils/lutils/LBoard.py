@@ -472,7 +472,7 @@ class LBoard:
         else:
             self._addPiece (fcord, tpiece, color)
         
-        # Pyt back rook moved by castling
+        # Put back rook moved by castling
         if flag in (KING_CASTLE, QUEEN_CASTLE):
             if self.boardVariant.variant == FISCHERRANDOMCHESS:
                 if self.color == WHITE:

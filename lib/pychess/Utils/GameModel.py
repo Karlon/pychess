@@ -12,7 +12,7 @@ from pychess.System.ThreadPool import pool, PooledThread
 from pychess.System.protoopen import protoopen, protosave, isWriteable
 from pychess.System.Log import log
 from pychess.System import glock
-from pychess import Variants
+from pychess.Variants.normal import NormalChess
 
 from logic import getStatus, isClaimableDraw
 from const import *
@@ -33,7 +33,7 @@ class GameModel (GObject, PooledThread):
         "action_error":  (SIGNAL_RUN_FIRST, TYPE_NONE, (object, int))
     }
     
-    def __init__ (self, timemodel=None, variant=Variants.NormalChess):
+    def __init__ (self, timemodel=None, variant=NormalChess):
         GObject.__init__(self)
 
         self.variant = variant

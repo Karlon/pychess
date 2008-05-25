@@ -20,7 +20,9 @@ from pychess.Players.Human import Human
 from pychess.widgets import BoardPreview
 from pychess.widgets import ionest
 from pychess.Savers import pgn
-from pychess import Variants 
+from pychess.Variants.normal import NormalChess
+from pychess.Variants.shuffle import ShuffleChess
+from pychess.Variants.fischerandom import FischerRandomChess
 
 # We init players here, to have a better balance between application and dialog
 # startup time.
@@ -36,8 +38,9 @@ image = it.load_icon("stock_notebook", 24, gtk.ICON_LOOKUP_USE_BUILTIN)
 for engine in discoverer.getEngines().values():
     playerItems += [(image, discoverer.getName(engine), "stock_notebook")]
 
+variants = (NormalChess, ShuffleChess, FischerRandomChess)
 variantItems = []
-for variantClass in Variants.variants:
+for variantClass in variants:
     variantItems += [(image, variantClass.name, "stock_notebook")]
 
 difItems = []
@@ -121,7 +124,7 @@ class _GameInitializationMode:
             
             # Find variant
             variant = cls.widgets["variant"].get_active()
-            variant = Variants.variants[variant]
+            variant = variants[variant]
             
             # Find time
             if cls.widgets["useTimeCB"].get_active():

@@ -8,6 +8,7 @@ import random
 #__builtin__.__dict__['_'] = lambda s: s
 
 from pychess.Utils.const import *
+from pychess.Utils.Cord import Cord
 from pychess.Utils.Board import Board
 from pychess.Utils.lutils.bitboard import *
 from pychess.Utils.lutils.attack import *
@@ -28,18 +29,18 @@ class FRCBoard(Board):
     def move_castling_rook(self, flag, newBoard):
         if self.color == WHITE:
             if flag == QUEEN_CASTLE:
-                newBoard[Cord(D1)] = newBoard[Cord(self.ini_rooks[0][0])]
-                newBoard[Cord(self.ini_rooks[0][0])] = None
+                newBoard[Cord(D1)] = newBoard[Cord(self.board.ini_rooks[0][0])]
+                newBoard[Cord(self.board.ini_rooks[0][0])] = None
             elif flag == KING_CASTLE:
-                newBoard[Cord(F1)] = newBoard[Cord(self.ini_rooks[0][1])]
-                newBoard[Cord(self.ini_rooks[0][1])] = None
+                newBoard[Cord(F1)] = newBoard[Cord(self.board.ini_rooks[0][1])]
+                newBoard[Cord(self.board.ini_rooks[0][1])] = None
         else:
             if flag == QUEEN_CASTLE:
-                newBoard[Cord(D8)] = newBoard[Cord(self.ini_rooks[1][0])]
-                newBoard[Cord(self.ini_rooks[1][0])] = None
+                newBoard[Cord(D8)] = newBoard[Cord(self.board.ini_rooks[1][0])]
+                newBoard[Cord(self.board.ini_rooks[1][0])] = None
             elif flag == KING_CASTLE:
-                newBoard[Cord(F8)] = newBoard[Cord(self.ini_rooks[1][1])]
-                newBoard[Cord(self.ini_rooks[1][1])] = None
+                newBoard[Cord(F8)] = newBoard[Cord(self.board.ini_rooks[1][1])]
+                newBoard[Cord(self.board.ini_rooks[1][1])] = None
 
     def shuffle_start(self):
         """ Create a random initial position.
@@ -81,7 +82,8 @@ class FRCBoard(Board):
         tmp = ''.join(tmp)
         tmp = tmp + '/pppppppp/8/8/8/8/PPPPPPPP/' + tmp.upper() + ' w KQkq - 0 1'
         # TODO: remove this testline
-        tmp = 'rbbkqnnr/pppppppp/8/8/8/8/PPPPPPPP/RBBKQNNR' + ' w KQkq - 0 1'
+#        tmp = 'rbbkqnnr/pppppppp/8/8/8/8/PPPPPPPP/RBBKQNNR' + ' w KQkq - 0 1'
+        tmp = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR' + ' w KQkq - 0 1'
 
         return tmp
 
@@ -92,9 +94,9 @@ class FischerRandomChess:
 
 
 def frc_castling_moves(board):
+    # TODO: complete with all castling moves of booth color
     if board.color == WHITE and board.castling & W_OO:
-        # TODO: fixme
-        blocker = 0 #clearBit(board.blocker, board.ini_rooks[WHITE][1])
+        blocker = clearBit(board.blocker, board.ini_rooks[WHITE][1])
         if board.ini_kings[WHITE] == B1 and not fromToRay[B1][G1] & blocker and \
             not isAttacked (board, B1, BLACK) and \
             not isAttacked (board, C1, BLACK) and \

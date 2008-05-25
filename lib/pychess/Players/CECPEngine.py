@@ -55,9 +55,7 @@ class CECPEngine (ProtocolEngine):
             "pause":     0
         }
         
-        if color == WHITE:
-            self.board = Board(setup=True)
-        else: self.board = None
+        self.board = None
         self.forced = False
         self.gonext = False
         self.sd = True

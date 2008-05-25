@@ -429,7 +429,7 @@ def toAN (board, move):
 
 def parseAN (board, an):
     """ Parse an Algebraic Notation string """
-
+    print 'parseAN', an
     if not 4 <= len(an) <= 5:
         raise ParsingError, (an, "the move must be 4 or 5 chars long", board.asFen())
     
@@ -460,7 +460,7 @@ def parseAN (board, an):
             FILE(fcord) != FILE(tcord) and RANK(fcord) != RANK(tcord):
         flag = ENPASSANT
     else: flag = NORMAL_MOVE
-    
+
     return newMove (fcord, tcord, flag)
 
 ################################################################################
