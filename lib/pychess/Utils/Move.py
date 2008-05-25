@@ -40,6 +40,7 @@ class Move:
                         self.flag = QUEEN_CASTLE
                     elif (abs(self.cord0.x - self.cord1.x) > 1 and self.cord1.x==G1) or \
                             board.board.ini_rooks[board.color][1] == self.cord1.x:
+                        print "hopp", self.cord1.x
                         self.flag = KING_CASTLE
                 else:
                     if self.cord0.x - self.cord1.x == 2:

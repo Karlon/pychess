@@ -68,10 +68,29 @@ class Board:
         cord0, cord1 = move.cords
         flag = FLAG(move.move)
         
-        newBoard[cord1] = newBoard[cord0]
-        newBoard[cord0] = None
+        if self.variant != FISCHERRANDOMCHESS:
+            newBoard[cord1] = newBoard[cord0]
+            newBoard[cord0] = None
+        else:
+            if flag in (KING_CASTLE, QUEEN_CASTLE):
+                king = newBoard[cord0]
+            else:
+                newBoard[cord1] = newBoard[cord0]
+            newBoard[cord0] = None
         
         self.move_castling_rook(flag, newBoard)
+        if self.variant == FISCHERRANDOMCHESS:
+            if flag in (KING_CASTLE, QUEEN_CASTLE):
+                if self.color == WHITE:
+                    if flag == QUEEN_CASTLE:
+                        newBoard[Cord(C1)] = king
+                    elif flag == KING_CASTLE:
+                        newBoard[Cord(G1)] = king
+                else:
+                    if flag == QUEEN_CASTLE:
+                        newBoard[Cord(C8)] = king
+                    elif flag == KING_CASTLE:
+                        newBoard[Cord(G8)] = king
                 
         if flag in PROMOTIONS:
             newBoard[cord1] = Piece(self.color, PROMOTE_PIECE(flag))

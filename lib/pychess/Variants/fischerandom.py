@@ -82,8 +82,8 @@ class FRCBoard(Board):
         tmp = ''.join(tmp)
         tmp = tmp + '/pppppppp/8/8/8/8/PPPPPPPP/' + tmp.upper() + ' w KQkq - 0 1'
         # TODO: remove this testline
-#        tmp = 'rbbkqnnr/pppppppp/8/8/8/8/PPPPPPPP/RBBKQNNR' + ' w KQkq - 0 1'
-        tmp = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR' + ' w KQkq - 0 1'
+        tmp = 'rbbkqnnr/pppppppp/8/8/8/8/PPPPPPPP/RBBKQNNR' + ' w KQkq - 0 1'
+#        tmp = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR' + ' w KQkq - 0 1'
 
         return tmp
 

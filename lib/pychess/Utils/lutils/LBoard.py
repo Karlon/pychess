@@ -340,6 +340,7 @@ class LBoard:
                 else:
                     rookf = fcord - 4
                     rookt = fcord - 1
+                    self._move (rookf, rookt, ROOK, self.color)
             else:
                 if self.boardVariant.variant == FISCHERRANDOMCHESS:
                     if self.color == WHITE:
@@ -351,7 +352,7 @@ class LBoard:
                 else:
                     rookf = fcord + 3
                     rookt = fcord + 1
-            self._move (rookf, rookt, ROOK, self.color)
+                    self._move (rookf, rookt, ROOK, self.color)
             self.hasCastled[self.color] = True
         
         if tpiece == EMPTY and fpiece != PAWN and \
@@ -425,7 +426,28 @@ class LBoard:
                         self.castling &= ~W_OOO
         
         if not flag in PROMOTIONS:
-            self._move(fcord, tcord, fpiece, self.color)
+            if self.boardVariant.variant == FISCHERRANDOMCHESS:
+                if flag in (KING_CASTLE, QUEEN_CASTLE):
+                    if tpiece == EMPTY:
+                        print 'ures helyre sanc'
+                        self._move(fcord, tcord, fpiece, self.color)
+                        self._move(rookf, rookt, ROOK, self.color)
+                        print self
+                    else:
+                        print 'bastyara sanc'
+                        # the castling rook was removed as Capture
+                        if flag == KING_CASTLE:
+                            print "king side"
+                            self._move(fcord, rookt+1, fpiece, self.color)
+                        else:
+                            print "queen side"
+                            self._move(fcord, rookt-1, fpiece, self.color)
+                        self._addPiece(rookt, ROOK, self.color)
+                        print self
+                else:
+                    self._move(fcord, tcord, fpiece, self.color)
+            else:
+                self._move(fcord, tcord, fpiece, self.color)
         
         self.setColor(opcolor)
         self.updateBoard ()
@@ -433,7 +455,6 @@ class LBoard:
         return move # Move is returned with the captured piece flag set
     
     def popMove (self):
-        
         # Note that we remove the last made move, which was not made by boards
         # current color, but by its opponent
         color = 1 - self.color
