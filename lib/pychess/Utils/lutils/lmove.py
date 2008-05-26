@@ -429,7 +429,7 @@ def toAN (board, move):
 
 def parseAN (board, an):
     """ Parse an Algebraic Notation string """
-    print 'parseAN', an
+
     if not 4 <= len(an) <= 5:
         raise ParsingError, (an, "the move must be 4 or 5 chars long", board.asFen())
     
@@ -443,10 +443,19 @@ def parseAN (board, an):
         flag = chr2Sign[an[4].lower()] + 2
     elif board.arBoard[fcord] == KING:
         if board.boardVariant.variant == FISCHERRANDOMCHESS:
-            # TODO: complete with BLACK castles (C8, G8)
-            if (abs(fcord - tcord) > 1 and tcord==C1) or board.ini_rooks[board.color][0] == tcord:
+            if (abs(fcord - tcord) > 1 and \
+                    ((board.color == WHITE and tcord==C1) or \
+                     (board.color == BLACK and tcord==C8))) or \
+                (board.ini_rooks[board.color][0] == tcord and \
+                    (board.color == WHITE and board.castling & W_OOO) or \
+                    (board.color == BLACK and board.castling & B_OOO))                :
                 flag = QUEEN_CASTLE
-            elif (abs(fcord - tcord) > 1 and tcord==G1) or board.ini_rooks[board.color][1] == tcord:
+            elif (abs(fcord - tcord) > 1 and \
+                    ((board.color == WHITE and tcord==G1) or \
+                     (board.color == BLACK and tcord==G8))) or \
+                (board.ini_rooks[board.color][1] == tcord and \
+                    (board.color == WHITE and board.castling & W_OOO) or \
+                    (board.color == BLACK and board.castling & B_OOO))                :
                 flag = KING_CASTLE
             else:
                 flag = NORMAL_MOVE

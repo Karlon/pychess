@@ -429,21 +429,18 @@ class LBoard:
             if self.boardVariant.variant == FISCHERRANDOMCHESS:
                 if flag in (KING_CASTLE, QUEEN_CASTLE):
                     if tpiece == EMPTY:
-                        print 'ures helyre sanc'
                         self._move(fcord, tcord, fpiece, self.color)
                         self._move(rookf, rookt, ROOK, self.color)
-                        print self
                     else:
-                        print 'bastyara sanc'
-                        # the castling rook was removed as Capture
+                        # If the King was moving upon the involved Rook
+                        # the rook was removed by a Capture before, so
+                        # move the King into position and just add the
+                        # Rook back next to the King
                         if flag == KING_CASTLE:
-                            print "king side"
                             self._move(fcord, rookt+1, fpiece, self.color)
                         else:
-                            print "queen side"
                             self._move(fcord, rookt-1, fpiece, self.color)
                         self._addPiece(rookt, ROOK, self.color)
-                        print self
                 else:
                     self._move(fcord, tcord, fpiece, self.color)
             else:
