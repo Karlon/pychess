@@ -210,10 +210,17 @@ class ActiveState (BoardState):
                 # Select it if it is friendly
                 if self.getBoard()[cord] and \
                         self.getBoard()[cord].color == self.getBoard().color:
-                    self.view.selected = cord
-                    self.view.active = None
-                    self.view.startAnimation()
-                    self.parrent.setState(self.parrent.selectedState)
+                    if self.getBoard().variant == FISCHERRANDOMCHESS:
+                        # TODO: anable only for castling
+                        self.emit_move_signal(self.view.selected, cord)
+                        self.view.selected = None
+                        self.view.active = None
+                        self.parrent.setState(self.parrent.normalState)
+                    else:
+                        self.view.selected = cord
+                        self.view.active = None
+                        self.view.startAnimation()
+                        self.parrent.setState(self.parrent.selectedState)
                 # Mote to it, if it isn't
                 else:
                     self.emit_move_signal(self.view.selected, cord)
