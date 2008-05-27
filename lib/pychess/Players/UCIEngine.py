@@ -3,7 +3,6 @@ from pychess.Players.ProtocolEngine import ProtocolEngine
 from pychess.Utils.Move import *
 from pychess.Utils.Cord import Cord
 from pychess.Utils.Offer import Offer
-from pychess.Utils.Board import Board
 from pychess.Utils.GameModel import GameModel
 from pychess.Utils.logic import validate, getMoveKillingKing
 from pychess.Utils.const import *

@@ -311,7 +311,14 @@ class LBoard:
         
         # Capture
         if tpiece != EMPTY:
-            self._removePiece(tcord, tpiece, opcolor)
+            if self.boardVariant.variant == FISCHERRANDOMCHESS:
+                if flag in (KING_CASTLE, QUEEN_CASTLE):
+                    # capturing _our_ piece!
+                    self._removePiece(tcord, ROOK, self.color)
+                else:
+                    self._removePiece(tcord, tpiece, opcolor)
+            else:
+                self._removePiece(tcord, tpiece, opcolor)
         
         if fpiece == PAWN:
 
@@ -337,6 +344,7 @@ class LBoard:
                     else:
                         rookf = self.ini_rooks[1][0]
                         rookt = D8
+                    # don't move our rook yet
                 else:
                     rookf = fcord - 4
                     rookt = fcord - 1
@@ -349,6 +357,7 @@ class LBoard:
                     else:
                         rookf = self.ini_rooks[1][1]
                         rookt = F8
+                    # don't move our rook yet
                 else:
                     rookf = fcord + 3
                     rookt = fcord + 1
@@ -429,17 +438,17 @@ class LBoard:
             if self.boardVariant.variant == FISCHERRANDOMCHESS:
                 if flag in (KING_CASTLE, QUEEN_CASTLE):
                     if tpiece == EMPTY:
-                        self._move(fcord, tcord, fpiece, self.color)
+                        self._move(fcord, tcord, KING, self.color)
                         self._move(rookf, rookt, ROOK, self.color)
                     else:
+                        if flag == KING_CASTLE:
+                            self._move(fcord, rookt+1, KING, self.color)
+                        else:
+                            self._move(fcord, rookt-1, KING, self.color)
                         # If the King was moving upon the involved Rook
                         # the rook was removed by a Capture before, so
                         # move the King into position and just add the
                         # Rook back next to the King
-                        if flag == KING_CASTLE:
-                            self._move(fcord, rookt+1, fpiece, self.color)
-                        else:
-                            self._move(fcord, rookt-1, fpiece, self.color)
                         self._addPiece(rookt, ROOK, self.color)
                 else:
                     self._move(fcord, tcord, fpiece, self.color)
@@ -467,32 +476,8 @@ class LBoard:
         
         tpiece = self.arBoard[tcord]
         
-        self._removePiece (tcord, tpiece, color)
-        
-        # Put back captured piece
-        if cpiece != EMPTY:
-            self._addPiece (tcord, cpiece, opcolor)
-            if flag in PROMOTIONS:
-                self._addPiece (fcord, PAWN, color)
-            else:
-                self._addPiece (fcord, tpiece, color)
-        
-        # Put back piece captured by enpassant
-        elif flag == ENPASSANT:
-            epcord = color == WHITE and tcord - 8 or tcord + 8
-            self._addPiece (epcord, PAWN, opcolor)
-            self._addPiece (fcord, PAWN, color)
-            
-        # Put back promoted pawn
-        elif flag in PROMOTIONS:
-            self._addPiece (fcord, PAWN, color)
-        # Put back moved piece
-        else:
-            self._addPiece (fcord, tpiece, color)
-        
-        # Put back rook moved by castling
-        if flag in (KING_CASTLE, QUEEN_CASTLE):
-            if self.boardVariant.variant == FISCHERRANDOMCHESS:
+        if self.boardVariant.variant == FISCHERRANDOMCHESS:
+            if flag in (KING_CASTLE, QUEEN_CASTLE):
                 if self.color == WHITE:
                     if flag == QUEEN_CASTLE:
                         rookf = self.ini_rooks[0][0]
@@ -507,6 +492,22 @@ class LBoard:
                     else:
                         rookf = self.ini_rooks[1][1]
                         rookt = F8
+                if cpiece == EMPTY:
+                    self._removePiece (tcord, KING, color)
+                else:
+                    if flag == KING_CASTLE:
+                        self._removePiece (rookt+1, KING, color)
+                    else:
+                        self._removePiece (rookt-1, KING, color)
+            else:
+                self._removePiece (tcord, tpiece, color)
+        else:
+            self._removePiece (tcord, tpiece, color)
+
+        # Put back rook moved by castling
+        if flag in (KING_CASTLE, QUEEN_CASTLE):
+            if self.boardVariant.variant == FISCHERRANDOMCHESS:
+                self._move (rookt, rookf, ROOK, color)
             else:
                 if flag == QUEEN_CASTLE:
                     rookf = fcord - 4
@@ -514,9 +515,39 @@ class LBoard:
                 else:
                     rookf = fcord + 3
                     rookt = fcord + 1
+                self._move (rookt, rookf, ROOK, color)
             self.hasCastled[color] = False
-            self._move (rookt, rookf, ROOK, color)
         
+        # Put back captured piece
+        if cpiece != EMPTY:
+            if flag in PROMOTIONS:
+                self._addPiece (tcord, cpiece, opcolor)
+                self._addPiece (fcord, PAWN, color)
+            else:
+                if self.boardVariant.variant == FISCHERRANDOMCHESS:
+                    if flag in (KING_CASTLE, QUEEN_CASTLE):
+                        if flag == KING_CASTLE:
+                            self._addPiece (fcord, KING, color)
+                        else:
+                            self._addPiece (fcord, KING, color)
+                else:
+                    self._addPiece (tcord, cpiece, opcolor)
+                    self._addPiece (fcord, tpiece, color)
+        
+        # Put back piece captured by enpassant
+        elif flag == ENPASSANT:
+            epcord = color == WHITE and tcord - 8 or tcord + 8
+            self._addPiece (epcord, PAWN, opcolor)
+            self._addPiece (fcord, PAWN, color)
+            
+        # Put back promoted pawn
+        elif flag in PROMOTIONS:
+            self._addPiece (fcord, PAWN, color)
+        # Put back moved piece
+        else:
+            self._addPiece (fcord, tpiece, color)
+        
+       
         self.setColor(color)
         self.updateBoard ()
         
