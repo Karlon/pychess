@@ -165,9 +165,13 @@ class Board:
     
     def clone (self):
         fenstr = self.asFen()
+        ini_kings = self.board.ini_kings
+        ini_rooks = self.board.ini_rooks
         lboard = LBoard(self)
         lboard.applyFen (fenstr)
         lboard.history = copy(self.board.history)
+        lboard.ini_kings = ini_kings
+        lboard.ini_rooks = ini_rooks
         
         if self.variant == FISCHERRANDOMCHESS:
             from pychess.Variants.fischerandom import FRCBoard

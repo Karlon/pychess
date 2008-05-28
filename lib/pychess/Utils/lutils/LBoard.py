@@ -94,8 +94,8 @@ class LBoard:
         self.history = []
 
         # initial cords of rooks and kings for castling in Chess960
-        self.ini_kings = [E1, E8]
-        self.ini_rooks = [[A1, H1], [A8, H8]]
+        self.ini_kings = [None, None] #[E1, E8]
+        self.ini_rooks = [[None, None], [None, None]] #[[A1, H1], [A8, H8]]
     
     def applyFen (self, fenstr):
         """ Applies the fenstring to the board.
@@ -167,7 +167,7 @@ class LBoard:
                         if piece == KING:
                             self.ini_kings[color] = cord
                         elif piece == ROOK:
-                            if cord < self.kings[color]:
+                            if self.ini_rooks[color][0] is None:
                                 self.ini_rooks[color][0] = cord
                             else:
                                 self.ini_rooks[color][1] = cord
@@ -313,8 +313,9 @@ class LBoard:
         if tpiece != EMPTY:
             if self.boardVariant.variant == FISCHERRANDOMCHESS:
                 if flag in (KING_CASTLE, QUEEN_CASTLE):
-                    # capturing _our_ piece!
-                    self._removePiece(tcord, ROOK, self.color)
+                    # don't capture _our_ piece!
+                    pass
+                    #self._removePiece(tcord, ROOK, self.color)
                 else:
                     self._removePiece(tcord, tpiece, opcolor)
             else:
@@ -441,6 +442,7 @@ class LBoard:
                         self._move(fcord, tcord, KING, self.color)
                         self._move(rookf, rookt, ROOK, self.color)
                     else:
+                        self._removePiece(rookf, ROOK, self.color)
                         if flag == KING_CASTLE:
                             self._move(fcord, rookt+1, KING, self.color)
                         else:
