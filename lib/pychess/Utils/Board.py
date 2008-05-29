@@ -142,12 +142,20 @@ class Board:
     
     def clone (self):
         fenstr = self.asFen()
+        
         lboard = LBoard(self)
         lboard.applyFen (fenstr)
         lboard.history = copy(self.board.history)
+        lboard.ini_kings = copy(self.board.ini_kings)
+        lboard.ini_rooks = copy(self.board.ini_rooks)
         
-        newBoard = Board()
+        if self.variant == FISCHERRANDOMCHESS:
+            from pychess.Variants.fischerandom import FRCBoard
+            newBoard = FRCBoard()
+        else:
+            newBoard = Board()
         newBoard.board = lboard
+
         for y, row in enumerate(self.data):
             for x, piece in enumerate(row):
                 newBoard.data[y][x] = piece

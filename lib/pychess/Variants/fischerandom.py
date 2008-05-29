@@ -13,8 +13,7 @@ from pychess.Utils.Cord import Cord
 from pychess.Utils.Board import Board
 from pychess.Utils.lutils.bitboard import *
 from pychess.Utils.lutils.attack import *
-
-from pychess.Utils.lutils.lmove import newMove
+from pychess.Utils.lutils.lmove import newMove, FLAG, PROMOTE_PIECE
 
 
 class FRCBoard(Board):
@@ -81,32 +80,6 @@ class FRCBoard(Board):
         
         elif flag == ENPASSANT:
             newBoard[Cord(cord1.x, cord0.y)] = None
-        
-        return newBoard
-
-
-    def clone (self):
-        fenstr = self.asFen()
-        
-        # save initial king/rook positions
-        # for the new LBoard instance
-        ini_kings = self.board.ini_kings
-        ini_rooks = self.board.ini_rooks
-
-        lboard = LBoard(self)
-        lboard.applyFen (fenstr)
-        lboard.history = copy(self.board.history)
-        
-        # restore them
-        lboard.ini_kings = ini_kings
-        lboard.ini_rooks = ini_rooks
-        
-        newBoard = FRCBoard()
-        newBoard.board = lboard
-
-        for y, row in enumerate(self.data):
-            for x, piece in enumerate(row):
-                newBoard.data[y][x] = piece
         
         return newBoard
 
