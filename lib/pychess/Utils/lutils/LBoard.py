@@ -312,11 +312,8 @@ class LBoard:
         # Capture
         if tpiece != EMPTY:
             if self.boardVariant.variant == FISCHERRANDOMCHESS:
-                if flag in (KING_CASTLE, QUEEN_CASTLE):
-                    # don't capture _our_ piece!
-                    pass
-                    #self._removePiece(tcord, ROOK, self.color)
-                else:
+                # don't capture _our_ piece!
+                if flag not in (KING_CASTLE, QUEEN_CASTLE):
                     self._removePiece(tcord, tpiece, opcolor)
             else:
                 self._removePiece(tcord, tpiece, opcolor)
@@ -447,10 +444,6 @@ class LBoard:
                             self._move(fcord, rookt+1, KING, self.color)
                         else:
                             self._move(fcord, rookt-1, KING, self.color)
-                        # If the King was moving upon the involved Rook
-                        # the rook was removed by a Capture before, so
-                        # move the King into position and just add the
-                        # Rook back next to the King
                         self._addPiece(rookt, ROOK, self.color)
                 else:
                     self._move(fcord, tcord, fpiece, self.color)

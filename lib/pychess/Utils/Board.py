@@ -1,4 +1,3 @@
-import sys
 from copy import copy
 
 from lutils.LBoard import LBoard
@@ -68,39 +67,9 @@ class Board:
         cord0, cord1 = move.cords
         flag = FLAG(move.move)
         
-        if self.variant != FISCHERRANDOMCHESS:
-            newBoard[cord1] = newBoard[cord0]
-            newBoard[cord0] = None
-        else:
-            if flag in (KING_CASTLE, QUEEN_CASTLE):
-                king = newBoard[cord0]
-            else:
-                newBoard[cord1] = newBoard[cord0]
-            newBoard[cord0] = None
+        newBoard[cord1] = newBoard[cord0]
+        newBoard[cord0] = None
         
-        self.move_castling_rook(flag, newBoard)
-        if self.variant == FISCHERRANDOMCHESS:
-            if flag in (KING_CASTLE, QUEEN_CASTLE):
-                if self.color == WHITE:
-                    if flag == QUEEN_CASTLE:
-                        newBoard[Cord(C1)] = king
-                    elif flag == KING_CASTLE:
-                        newBoard[Cord(G1)] = king
-                else:
-                    if flag == QUEEN_CASTLE:
-                        newBoard[Cord(C8)] = king
-                    elif flag == KING_CASTLE:
-                        newBoard[Cord(G8)] = king
-                
-        if flag in PROMOTIONS:
-            newBoard[cord1] = Piece(self.color, PROMOTE_PIECE(flag))
-        
-        elif flag == ENPASSANT:
-            newBoard[Cord(cord1.x, cord0.y)] = None
-        
-        return newBoard
-
-    def move_castling_rook(self, flag, newBoard):
         if self.color == WHITE:
             if flag == QUEEN_CASTLE:
                 newBoard[Cord(D1)] = newBoard[Cord(A1)]
@@ -115,7 +84,15 @@ class Board:
             elif flag == KING_CASTLE:
                 newBoard[Cord(F8)] = newBoard[Cord(H8)]
                 newBoard[Cord(H8)] = None
+
+        if flag in PROMOTIONS:
+            newBoard[cord1] = Piece(self.color, PROMOTE_PIECE(flag))
         
+        elif flag == ENPASSANT:
+            newBoard[Cord(cord1.x, cord0.y)] = None
+        
+        return newBoard
+
     def willLeaveInCheck (self, move):
         self.board.lock.acquire()
         try:
@@ -165,19 +142,11 @@ class Board:
     
     def clone (self):
         fenstr = self.asFen()
-        ini_kings = self.board.ini_kings
-        ini_rooks = self.board.ini_rooks
         lboard = LBoard(self)
         lboard.applyFen (fenstr)
         lboard.history = copy(self.board.history)
-        lboard.ini_kings = ini_kings
-        lboard.ini_rooks = ini_rooks
         
-        if self.variant == FISCHERRANDOMCHESS:
-            from pychess.Variants.fischerandom import FRCBoard
-            newBoard = FRCBoard()
-        else:
-            newBoard = Board()
+        newBoard = Board()
         newBoard.board = lboard
         for y, row in enumerate(self.data):
             for x, piece in enumerate(row):

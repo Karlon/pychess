@@ -2,6 +2,7 @@
 # http://en.wikipedia.org/wiki/Chess960
 
 import random
+from copy import copy
 
 # used only for selftesting
 #import __builtin__
@@ -26,7 +27,27 @@ class FRCBoard(Board):
         else:
             Board.__init__(self, setup=setup)
 
-    def move_castling_rook(self, flag, newBoard):
+    def move (self, move):
+        
+        assert self[move.cord0], "%s %s" % (move, self.asFen())
+        
+        newBoard = self.clone()
+        newBoard.board.applyMove (move.move)
+        
+        cord0, cord1 = move.cords
+        flag = FLAG(move.move)
+        
+        # in frc there are unusual castling positions where
+        # king will move on top of the castling rook, so...
+        if flag in (KING_CASTLE, QUEEN_CASTLE):
+            # don't put on the castling king yet
+            king = newBoard[cord0]
+        else:
+            newBoard[cord1] = newBoard[cord0]
+
+        newBoard[cord0] = None
+        
+        # move castling rook
         if self.color == WHITE:
             if flag == QUEEN_CASTLE:
                 newBoard[Cord(D1)] = newBoard[Cord(self.board.ini_rooks[0][0])]
@@ -41,6 +62,54 @@ class FRCBoard(Board):
             elif flag == KING_CASTLE:
                 newBoard[Cord(F8)] = newBoard[Cord(self.board.ini_rooks[1][1])]
                 newBoard[Cord(self.board.ini_rooks[1][1])] = None
+        
+        # put the castling king now
+        if flag in (KING_CASTLE, QUEEN_CASTLE):
+            if self.color == WHITE:
+                if flag == QUEEN_CASTLE:
+                    newBoard[Cord(C1)] = king
+                elif flag == KING_CASTLE:
+                    newBoard[Cord(G1)] = king
+            else:
+                if flag == QUEEN_CASTLE:
+                    newBoard[Cord(C8)] = king
+                elif flag == KING_CASTLE:
+                    newBoard[Cord(G8)] = king
+                
+        if flag in PROMOTIONS:
+            newBoard[cord1] = Piece(self.color, PROMOTE_PIECE(flag))
+        
+        elif flag == ENPASSANT:
+            newBoard[Cord(cord1.x, cord0.y)] = None
+        
+        return newBoard
+
+
+    def clone (self):
+        fenstr = self.asFen()
+        
+        # save initial king/rook positions
+        # for the new LBoard instance
+        ini_kings = self.board.ini_kings
+        ini_rooks = self.board.ini_rooks
+
+        lboard = LBoard(self)
+        lboard.applyFen (fenstr)
+        lboard.history = copy(self.board.history)
+        
+        # restore them
+        lboard.ini_kings = ini_kings
+        lboard.ini_rooks = ini_rooks
+        
+        newBoard = FRCBoard()
+        newBoard.board = lboard
+
+        for y, row in enumerate(self.data):
+            for x, piece in enumerate(row):
+                newBoard.data[y][x] = piece
+        
+        return newBoard
+
 
     def shuffle_start(self):
         """ Create a random initial position.
