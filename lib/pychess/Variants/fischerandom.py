@@ -123,7 +123,7 @@ class FRCBoard(Board):
 
         tmp = ''.join(tmp)
         tmp = tmp + '/pppppppp/8/8/8/8/PPPPPPPP/' + tmp.upper() + ' w KQkq - 0 1'
-        tmp = 'rnqkbbnr/pppppppp/8/8/8/8/PPPPPPPP/RNQKBBNR'+' w KQkq - 0 1'
+        #tmp = 'rnqkbbnr/pppppppp/8/8/8/8/PPPPPPPP/RNQKBBNR'+' w KQkq - 0 1'
         
         return tmp
 
