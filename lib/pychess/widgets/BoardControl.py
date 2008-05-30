@@ -211,11 +211,18 @@ class ActiveState (BoardState):
                 if self.getBoard()[cord] and \
                         self.getBoard()[cord].color == self.getBoard().color:
                     if self.getBoard().variant == FISCHERRANDOMCHESS:
-                        # TODO: anable only for castling
-                        self.emit_move_signal(self.view.selected, cord)
-                        self.view.selected = None
-                        self.view.active = None
-                        self.parrent.setState(self.parrent.normalState)
+                        # in frc we enable castling moves when the king
+                        # moves on top of the involved rook
+                        if self.validate(self.view.selected, cord):
+                            self.emit_move_signal(self.view.selected, cord)
+                            self.view.selected = None
+                            self.view.active = None
+                            self.parrent.setState(self.parrent.normalState)
+                        else:
+                            self.view.selected = cord
+                            self.view.active = None
+                            self.view.startAnimation()
+                            self.parrent.setState(self.parrent.selectedState)
                     else:
                         self.view.selected = cord
                         self.view.active = None
