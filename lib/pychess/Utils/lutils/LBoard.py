@@ -525,6 +525,9 @@ class LBoard:
                             self._addPiece (fcord, KING, color)
                         else:
                             self._addPiece (fcord, KING, color)
+                    else:
+                        self._addPiece (tcord, cpiece, opcolor)
+                        self._addPiece (fcord, tpiece, color)
                 else:
                     self._addPiece (tcord, cpiece, opcolor)
                     self._addPiece (fcord, tpiece, color)
