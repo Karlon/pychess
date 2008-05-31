@@ -127,6 +127,7 @@ class VerboseTelnet (Telnet):
         for i, port in enumerate(ports):
             try:
                 Telnet.open(self, host, port)
+                break
             except socket.error:
                 if i == len(ports)-1:
                     raise
