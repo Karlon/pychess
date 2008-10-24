@@ -133,14 +133,19 @@ def parse_string(string, model, parent=None, variation=False):
                 node = Node()
                 mstr = m.group(MOVE)
                 node.move = mstr
+
                 if m.group(MOVE_COMMENT):
                     node.move += m.group(MOVE_COMMENT)
+
                 if last_node:
                     node.previous = last_node
                     last_node.next = node
                 nodes.append(node)
                 last_node = node
+
                 if not variation:
+                    if position != -1 and model.ply >= position:
+                        break
                     try:
                         move = parseAny (model.boards[-1], mstr)
                     except ParsingError, e:
@@ -160,31 +165,35 @@ def parse_string(string, model, parent=None, variation=False):
                 
                     # This is for the sidepanels
                     model.emit("game_changed")
+
         elif group == VARIATION_START:
             parenthesis += 1
             if parenthesis == 1:
                 v_parent = node
                 v_last_node = last_node
+
         elif group == VARIATION_END:
             parenthesis -= 1
             if parenthesis == 0:
                 v_last_node.variations.append(parse_string(v_string[:-1], model, v_parent, True))
                 v_string = ""
+
         elif group == COMMENT_REST:
             # TODO: comments have to be a list
             last_node.comment = text
+
         elif group == COMMENT_BRACE:
             last_node.comment = text
+
         elif group == COMMENT_NAG:
             node.move += ' ' + nag_replace(text)
+
         elif group == RESULT:
             model.result = text
             break
+
         else:
             print "Unknown:",text
-
-        ###if position != -1 and model.ply >= position:
-            ###break
 
         if error:
             raise error
@@ -294,15 +303,7 @@ class Node:
         self.move = move    # algebraic notation of the move
         self.comment = comment
         self.annotations = []
-        
-        ## For animation purposes. Each item in the movelist is a dictionary with
-        ## the following items:
-        ## "square" -> The square from which the piece moves
-        ## "target" -> The square to which the piece moves
-        #self.movelist = []
-        
         self.board = None
-
         self.variations = []
         self.parent = None
         self.next = None
@@ -315,160 +316,6 @@ class Node:
             x += repr(v)
         return x
 
-class xxxNotation:
-    def __init__(self, string=None):
-        self.nodes = []
-        if string:
-            self.nodes = PGN.parse_string(string)
-
-
-def xxxparse_string(string, position=None, parent=None, return_position=False):
-    """ Recursively parse a PGN compatible notation string
-        string: The string to parse
-        position: Starting position
-        parent: Parent node (for variations)
-        return_position: Whether to return the final position instead of nodes
-        Returns an array of nodes or the final position """
-
-    nodes = []
-    result_strings = ['1-0', '0-1', '1/2-1/2', '*']
-    
-###    board = Board(position=position)
-    
-    # create the initial node
-    node = Node()
-###    node.position = board.get_position()
-    node.parent = parent
-    last_node = node
-    nodes.append(node)
-    
-    i = 0; first_illegal = 0
-    while i < len(string):
-        if string[i] in ' ' '\n' '\t':
-            i += 1
-            continue
-        
-        # Get the next token
-        token = string[i:].split()[0]
-        
-        # Variation
-        if token[0] == '(' and not return_position:
-            # find the matching bracket
-            b, j = 1, i+1
-            in_comment = False  # we have to ignore brackets inside of comments
-            
-            for char in string[j:]:
-                j += 1
-                if in_comment:
-                    if char == "}":
-                        in_comment = False
-                    continue
-                if char == '{':
-                    in_comment = True
-                    continue
-                if char == '(':
-                    b+=1
-                elif char == ')':
-                    b-=1
-                if b == 0:
-                    break
-                    
-            variation = string[i+1:j-1]
-            i = j + 1
-            
-            # now recursively parse this string and add it as a variation to the node
-            last_node.variations.append(parse_string(variation, last_node.previous.position, node))
-        
-        # Comment
-        elif token[0] == '{' and not return_position:
-            j = i + string[i:].find('}')
-            comment = string[i+1:j]
-            comment = comment.replace('\n', ' ')
-            last_node.comment = comment
-            i = j + 1
-            
-        else:
-            i += len(token)+1
-            
-            # strip move number
-            if token.find('.') >= 0:
-                token = token[token.rfind('.')+1:]
-                
-            if len(token) < 2:
-                continue
-            
-            # Create a new node 
-            node = Node()
-            node.move = token
-            
-            if node.move in result_strings:
-                break
-            #elif node.move == "O-O" or node.move == "0-0":
-                #board.castle_kingside()
-                #if board.side_to_move == "black": x = 56    
-                #else: x = 0
-                #move = {}
-                #move["square"] = 4 + x
-                #move["target"] = 6 + x
-                #node.movelist.append(move)
-                #move = {}
-                #move["square"] = 7 + x
-                #move["target"] = 5 + x
-                #node.movelist.append(move)
-            #elif node.move == "O-O-O" or node.move == "0-0-0":
-                #board.castle_queenside()
-                #if board.side_to_move == "black": x = 56
-                #else: x = 0
-                #move = {}
-                #move["square"] = 4 + x
-                #move["target"] = 2 + x
-                #node.movelist.append(move)
-                #move = {}
-                #move["square"] = 0 + x
-                #move["target"] = 3 + x
-                #node.movelist.append(move)
-            else:
-                print node.move
-                #m = parse_move(node.move)
-                
-                #if not m:
-                    ## treat illegal moves as annotations
-                    #last_node.annotations.append(utils.nag_replace(node.move))
-                    #continue
-                
-                #target = sq(m["file"]+m["rank"])
-                #(ax, ay) = alg_to_coord(m["file-ambi"], m["rank-ambi"])
-                
-                #square = None
-                #square = board.find_move(m["piece"], target, m["capture"], ax, ay)
-                #if square == None:
-                    #last_node.comment += "PGN parsing error at %s.\nRemaining moves:\n%s" % (node.move, string[i:])
-                    #break
-
-                #move = {}
-                #move["square"] = square
-                #move["target"] = target
-                #node.movelist.append(move)
-                
-                #board.add_move(square, target, m["piece"], m["capture"], m["promotion"])
-            # END IF
-            
-            #board.swap_color()
-            #node.position = board.get_position()
-            
-            # Link our shiny new node
-            if last_node:
-                node.previous = last_node
-                last_node.next = node
-            nodes.append(node)
-            last_node = node
-        # END IF
-    # END WHILE
-    
-    if return_position:
-        return last_node.position
-    else:
-        return nodes        
 
 def nag_replace(nag):
     if nag == "$0": return ""
