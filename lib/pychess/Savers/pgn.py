@@ -110,7 +110,7 @@ def load (file):
     return PGNFile (files)
 
 
-def parse_string(string, model, parent=None, variation=False):
+def parse_string(string, model, position, parent=None, variation=False):
     nodes = []
 
     node = Node()
@@ -146,6 +146,7 @@ def parse_string(string, model, parent=None, variation=False):
                 if not variation:
                     if position != -1 and model.ply >= position:
                         break
+
                     try:
                         move = parseAny (model.boards[-1], mstr)
                     except ParsingError, e:
@@ -175,7 +176,7 @@ def parse_string(string, model, parent=None, variation=False):
         elif group == VARIATION_END:
             parenthesis -= 1
             if parenthesis == 0:
-                v_last_node.variations.append(parse_string(v_string[:-1], model, v_parent, True))
+                v_last_node.variations.append(parse_string(v_string[:-1], model, position, v_parent, True))
                 v_string = ""
 
         elif group == COMMENT_REST:
@@ -229,7 +230,7 @@ class PGNFile (ChessFile):
         model.reason = UNKNOWN_REASON
         
         model.notation_string = self.games[gameno][1]
-        model.nodes = parse_string(model.notation_string, model)
+        model.nodes = parse_string(model.notation_string, model, position)
 
         if model.timemodel:
             blacks = len(model.moves)/2
