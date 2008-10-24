@@ -66,6 +66,8 @@ class GameModel (GObject, PooledThread):
         # The uri the current game was loaded from, or None if not a loaded game
         self.uri = None
         self.gameno = 0
+
+        self.nodes = []
         
         self.spectactors = {}
         

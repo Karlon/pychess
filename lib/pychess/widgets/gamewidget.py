@@ -13,7 +13,7 @@ from pychess.System import glock, conf, prefix
 from ChessClock import ChessClock
 from BoardControl import BoardControl
 from pydock.PyDockTop import PyDockTop
-from pydock.__init__ import CENTER, EAST
+from pydock.__init__ import CENTER, EAST, SOUTH
 from pychess.System.prefix import addHomePrefix
 from pychess.System.uistuff import makeYellow
 
@@ -214,7 +214,7 @@ class GameWidget (gobject.GObject):
         self.tabcontent.child.get_children()[1].set_text(text)
     
     def getTabText (self):
-        return self.tabcontent[1].get_text()
+        return self.tabcontent.child.get_children()[1].get_text()
     
     def status (self, message):
         glock.acquire()
@@ -323,6 +323,7 @@ def _ensureReadForGameWidgets ():
     
     # The dock
     
+    global dock, dockAlign
     dock = PyDockTop("main")
     dockAlign = createAlignment(4,4,0,4)
     dockAlign.add(dock)
@@ -390,13 +391,17 @@ def _ensureReadForGameWidgets ():
     
     if not os.path.isfile(dockLocation):
         leaf = dock.dock(docks["board"][1], CENTER, gtk.Label(docks["board"][0]), "board")
-        leaf.setDockable(False)
-        for i, id in enumerate(files):
-            title, panel = docks[str(id)]
-            if i == 0: pos = EAST
-            else: pos = CENTER
-            leaf = leaf.dock(panel, pos, title, str(id))
         docks["board"][1].show_all()
+        leaf.setDockable(False)
+        
+        # NE
+        leaf = leaf.dock(docks["historyPanel"][1], EAST, docks["historyPanel"][0], "historyPanel")
+        leaf = leaf.dock(docks["scorePanel"][1], CENTER, docks["scorePanel"][0], "scorePanel")
+        
+        # SE
+        leaf = leaf.dock(docks["bookPanel"][1], SOUTH, docks["bookPanel"][0], "bookPanel")
+        leaf = leaf.dock(docks["commentPanel"][1], CENTER, docks["commentPanel"][0], "commentPanel")
+        leaf = leaf.dock(docks["chatPanel"][1], CENTER, docks["chatPanel"][0], "chatPanel")
     
     dock.connect("unrealize", lambda dock: dock.saveToXML(dockLocation))
     
@@ -469,6 +474,22 @@ def getheadbook ():
         return None
     return widgets["mainvbox"].get_children()[1].child
 
+
+def zoomToBoard (viewZoomed):
+    def setStuffColor (color):
+        for boardvbox in notebooks["board"].get_children():
+            ccalign, boardcontrol = boardvbox.get_children()
+            ccalign.child.modify_bg(ccalign.child.state, color)
+            boardcontrol.view.modify_bg(boardcontrol.view.state, color)
+    
+    if viewZoomed:
+        dockAlign.remove(dock)
+        parent = notebooks["board"].get_parent()
+        parent.remove(notebooks["board"])
+        dockAlign.add(notebooks["board"])
+        setStuffColor(boardvbox.get_style().bg[ccalign.child.state])
+    else:
+        setStuffColor(notebooks["board"].get_style().bg[ccalign.child.state])
 
 def show_tabs (show):
     if show:
