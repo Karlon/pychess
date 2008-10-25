@@ -68,6 +68,7 @@ class GameModel (GObject, PooledThread):
         self.gameno = 0
 
         self.nodes = []
+        self.result = "*"
         
         self.spectactors = {}
         

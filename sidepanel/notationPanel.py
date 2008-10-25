@@ -2,6 +2,7 @@ import gtk
 import pango
 
 from pychess.System.prefix import addDataPrefix
+from pychess.System.glock import glock_connect
 
 __title__ = _("Annotation")
 __active__ = True
@@ -24,7 +25,6 @@ class Sidepanel(gtk.TextView):
         
         self.textview = self
         
-###        self.board = board.Board()
         self.nodeIters = []
         self.oldWidth = 0
         
@@ -51,6 +51,7 @@ class Sidepanel(gtk.TextView):
         self.boardview.connect("shown_changed", self.shown_changed)
 
         self.gamemodel = gmwidg.board.view.model
+        glock_connect(self.gamemodel, "game_loaded", self.game_loaded)
 
         return __widget__
 
@@ -271,6 +272,9 @@ class Sidepanel(gtk.TextView):
         self.nodeIters = []
         if len(self.gamemodel.nodes) > 0:
             self.insert_nodes(self.gamemodel.nodes[0], result=self.gamemodel.result)
+
+    def game_loaded(self, model, uri):
+        self.update()
             
     def shown_changed (self, board, shown):
         self.update_selected_node()
