@@ -1,6 +1,7 @@
 import gtk
 import pango
 
+from pychess.Utils.const import *
 from pychess.System.prefix import addDataPrefix
 from pychess.System.glock import glock_connect
 
@@ -18,7 +19,6 @@ class Sidepanel(gtk.TextView):
         
         self.set_editable(False)
         self.set_cursor_visible(False)
-        self.set_wrap_mode(gtk.WRAP_NONE)
 
         self.cursor_standard = gtk.gdk.Cursor(gtk.gdk.LEFT_PTR)
         self.cursor_hand = gtk.gdk.Cursor(gtk.gdk.HAND2)
@@ -271,7 +271,7 @@ class Sidepanel(gtk.TextView):
         self.textbuffer.set_text('')
         self.nodeIters = []
         if len(self.gamemodel.nodes) > 0:
-            self.insert_nodes(self.gamemodel.nodes[0], result=self.gamemodel.result)
+            self.insert_nodes(self.gamemodel.nodes[0], result=reprResult[self.gamemodel.status])
 
     def game_loaded(self, model, uri):
         self.update()

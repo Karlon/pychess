@@ -74,13 +74,13 @@ VARIATION_START, VARIATION_END, \
 RESULT, FULL_MOVE, MOVE_COUNT, MOVE, MOVE_COMMENT = range(1,11)
 
 pattern = re.compile(r"""
-    (\;.*?[\n\r])                                   # comment, rest of line style
-    |(\{.*?\})                                      # comment, between {}
-    |(\$[0-9]+)                                     # comment, Numeric Annotation Glyph
-    |(\()                                           # variation start
-    |(\))                                           # variation end
-    |(\*|1-0|0-1|1/2-1/2)                           # result
-    |(([0-9]{1,3}[.]+\s*)*([a-hxOoKQRBN0-8+#=-]{2,7})([\?!]{1,2})*)   # move (full, count, with ?!, ?!)
+    (\;.*?[\n\r])        # comment, rest of line style
+    |(\{.*?\})           # comment, between {} 
+    |(\$[0-9]+)          # comment, Numeric Annotation Glyph
+    |(\()                # variation start
+    |(\))                # variation end
+    |(\*|1-0|0-1|1/2)    # result (spec requires 1/2-1/2 for draw, but we want to tolerate simple 1/2 too)
+    |(([0-9]{1,3}[.]+\s*)*([a-hxOoKQRBN0-8+#=-]{2,7})([\?!]{1,2})*)    # move (full, count, move with ?!, ?!)
     """, re.VERBOSE | re.DOTALL)
 
 
@@ -190,7 +190,10 @@ def parse_string(string, model, position, parent=None, variation=False):
                 node.move += ' ' + nag_replace(text)
 
             elif group == RESULT:
-                model.result = text
+                if text == "1/2":
+                    model.status = reprResult.index("1/2-1/2")
+                else:
+                    model.status = reprResult.index(text)
                 break
 
             else:
@@ -293,7 +296,7 @@ class PGNFile (ChessFile):
         return int(round)
         
     def get_result (self, no):
-        pgn2Const = {"*":RUNNING, "1/2-1/2":DRAW, "1-0":WHITEWON, "0-1":BLACKWON}
+        pgn2Const = {"*":RUNNING, "1/2-1/2":DRAW, "1/2":DRAW, "1-0":WHITEWON, "0-1":BLACKWON}
         if self._getTag(no,"Result") in pgn2Const:
             return pgn2Const[self._getTag(no,"Result")]
         return RUNNING
