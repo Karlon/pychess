@@ -181,10 +181,13 @@ def parse_string(string, model, position, parent=None, variation=False):
 
             elif group == COMMENT_REST:
                 # TODO: comments have to be a list
-                last_node.comment = text
+                last_node.comments.append(text)
 
             elif group == COMMENT_BRACE:
-                last_node.comment = text
+                if node.parent is None and node.previous is None:
+                    model.comment = text
+                else:
+                    last_node.comments.append(text)
 
             elif group == COMMENT_NAG:
                 node.move += ' ' + nag_replace(text)
@@ -303,9 +306,9 @@ class PGNFile (ChessFile):
 
 
 class Node:
-    def __init__(self, move="", comment=""):
-        self.move = move    # algebraic notation of the move
-        self.comment = comment
+    def __init__(self):
+        self.move = ""    # algebraic notation of the move
+        self.comments = []
         self.annotations = []
         self.board = None
         self.variations = []

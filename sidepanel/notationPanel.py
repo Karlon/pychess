@@ -207,27 +207,11 @@ class Sidepanel(gtk.TextView):
             self.nodeIters.append(ni)
             
             # Comments
-            if node.comment:
+            if len(node.comments) > 0:
                 lineInterrupted = True
-                # For our custom wrapping hack, we split the line into words
-                words = node.comment.split()
-                for word in words:
-                    start = end_iter().get_offset()
-                    
-                    cstr = " " + word
-                    if level > 0:
-                        buf.insert_with_tags_by_name(end_iter(), cstr, "comment", "margin")
-                    else:
-                        buf.insert_with_tags_by_name(end_iter(), cstr, "comment")
-                    
-                    startIter = buf.get_iter_at_offset(start)
-                    
-                    width = self.textview.get_visible_rect().width
-                    endX = self.textview.get_iter_location(end_iter()).x
-                    if (endX + RIGHT_MARGIN) > width:
-                        buf.insert(startIter, "\n")
-                buf.insert(end_iter(), " ")
-                
+                for comment in node.comments:
+                    self.insert_comment(comment, level)
+
             # Variations
             if level == 0 and len(node.variations):
                 buf.insert(end_iter(), "\n")
@@ -259,7 +243,30 @@ class Sidepanel(gtk.TextView):
                 break
         if result:
             buf.insert_with_tags_by_name(end_iter(), " "+result, tag)
+
+    def insert_comment(self, comment, level=0):
+        buf = self.textbuffer
+        end_iter = buf.get_end_iter
         
+        # For our custom wrapping hack, we split the line into words
+        words = comment.split()
+        for word in words:
+            start = end_iter().get_offset()
+            
+            cstr = " " + word
+            if level > 0:
+                buf.insert_with_tags_by_name(end_iter(), cstr, "comment", "margin")
+            else:
+                buf.insert_with_tags_by_name(end_iter(), cstr, "comment")
+            
+            startIter = buf.get_iter_at_offset(start)
+            
+            width = self.textview.get_visible_rect().width
+            endX = self.textview.get_iter_location(end_iter()).x
+            if (endX + RIGHT_MARGIN) > width:
+                buf.insert(startIter, "\n")
+        buf.insert(end_iter(), " ")
+
     def on_expose(self, widget, data):
         w = self.textview.get_allocation().width
         if not w == self.oldWidth:
@@ -271,6 +278,8 @@ class Sidepanel(gtk.TextView):
         self.textbuffer.set_text('')
         self.nodeIters = []
         if len(self.gamemodel.nodes) > 0:
+            if self.gamemodel.comment:
+                self.insert_comment(self.gamemodel.comment)
             self.insert_nodes(self.gamemodel.nodes[0], result=reprResult[self.gamemodel.status])
 
     def game_loaded(self, model, uri):
