@@ -19,6 +19,7 @@ class Sidepanel(gtk.TextView):
         
         self.set_editable(False)
         self.set_cursor_visible(False)
+        self.set_wrap_mode(gtk.WRAP_WORD)
 
         self.cursor_standard = gtk.gdk.Cursor(gtk.gdk.LEFT_PTR)
         self.cursor_hand = gtk.gdk.Cursor(gtk.gdk.HAND2)
@@ -150,12 +151,12 @@ class Sidepanel(gtk.TextView):
                     t = node.move
                 n += 1
                 
-            for annotation in node.annotations:
-                # hack to support NAGs, which should be part of the move notation
-                if annotation in ("", "!", "?", "!?", "?!", "!!", "??"):
-                    t = t + annotation
-                else:
-                    t = t + " " + annotation
+            #for annotation in node.annotations:
+                ## hack to support NAGs, which should be part of the move notation
+                #if annotation in ("", "!", "?", "!?", "?!", "!!", "??"):
+                    #t = t + annotation
+                #else:
+                    #t = t + " " + annotation
                 
             newLine = False
             lineInterrupted = False
@@ -185,20 +186,20 @@ class Sidepanel(gtk.TextView):
                 buf.apply_tag_by_name("selected", startIter, endIter)
             
             # Custom wrapping hack
-            width = self.textview.get_visible_rect().width
-            startX = self.textview.get_iter_location(startIter).x
-            endX = self.textview.get_iter_location(end_iter()).x
-            if startX and (endX + RIGHT_MARGIN) > width:
-                buf.insert(startIter, "\n")
-                # Ugh...! "Necessary Evil"
-                if not c:
-                    startIter.forward_char()
-                    if dotsAdded:
-                        buf.insert_with_tags_by_name(startIter, `(ply+1)/2`, tag)
-                    else:
-                        buf.insert_with_tags_by_name(startIter, `(ply+1)/2`+"...", tag)
+            #width = self.textview.get_visible_rect().width
+            #startX = self.textview.get_iter_location(startIter).x
+            #endX = self.textview.get_iter_location(end_iter()).x
+            #if startX and (endX + RIGHT_MARGIN) > width:
+                #buf.insert(startIter, "\n")
+                ## Ugh...! "Necessary Evil"
+                #if not c:
+                    #startIter.forward_char()
+                    #if dotsAdded:
+                        #buf.insert_with_tags_by_name(startIter, `(ply+1)/2`, tag)
+                    #else:
+                        #buf.insert_with_tags_by_name(startIter, `(ply+1)/2`+"...", tag)
                     
-                startIter = buf.get_iter_at_offset(start+1)
+                #startIter = buf.get_iter_at_offset(start+1)
                 
             ni = {}
             ni["node"] = node
@@ -249,22 +250,26 @@ class Sidepanel(gtk.TextView):
         end_iter = buf.get_end_iter
         
         # For our custom wrapping hack, we split the line into words
-        words = comment.split()
-        for word in words:
-            start = end_iter().get_offset()
+        #words = comment.split()
+        #for word in words:
+            #start = end_iter().get_offset()
             
-            cstr = " " + word
-            if level > 0:
-                buf.insert_with_tags_by_name(end_iter(), cstr, "comment", "margin")
-            else:
-                buf.insert_with_tags_by_name(end_iter(), cstr, "comment")
+            #cstr = " " + word
+            #if level > 0:
+                #buf.insert_with_tags_by_name(end_iter(), cstr, "comment", "margin")
+            #else:
+                #buf.insert_with_tags_by_name(end_iter(), cstr, "comment")
             
-            startIter = buf.get_iter_at_offset(start)
+            #startIter = buf.get_iter_at_offset(start)
             
-            width = self.textview.get_visible_rect().width
-            endX = self.textview.get_iter_location(end_iter()).x
-            if (endX + RIGHT_MARGIN) > width:
-                buf.insert(startIter, "\n")
+            #width = self.textview.get_visible_rect().width
+            #endX = self.textview.get_iter_location(end_iter()).x
+            #if (endX + RIGHT_MARGIN) > width:
+                #buf.insert(startIter, "\n")
+        if level > 0:
+            buf.insert_with_tags_by_name(end_iter(), comment, "comment", "margin")
+        else:
+            buf.insert_with_tags_by_name(end_iter(), comment, "comment")
         buf.insert(end_iter(), " ")
 
     def on_expose(self, widget, data):

@@ -180,14 +180,13 @@ def parse_string(string, model, position, parent=None, variation=False):
                         model.emit("game_changed")
 
             elif group == COMMENT_REST:
-                # TODO: comments have to be a list
-                last_node.comments.append(text)
+                last_node.comments.append(text[1:])
 
             elif group == COMMENT_BRACE:
                 if node.parent is None and node.previous is None:
-                    model.comment = text
+                    model.comment = text[1:-1].replace('\r\n', ' ')
                 else:
-                    last_node.comments.append(text)
+                    last_node.comments.append(text[1:-1].replace('\r\n', ' '))
 
             elif group == COMMENT_NAG:
                 node.move += ' ' + nag_replace(text)
