@@ -10,8 +10,6 @@ __active__ = True
 __icon__ = addDataPrefix("glade/panel_moves.svg")
 __desc__ = _("Annotated game")
 
-#RIGHT_MARGIN = 2        # Textview margin for our custom line wrapping
-
 
 class Sidepanel(gtk.TextView):
     def __init__(self):
@@ -87,7 +85,7 @@ class Sidepanel(gtk.TextView):
         offset = it.get_offset()
         for ni in self.nodeIters:
             if offset >= ni["start"] and offset < ni["end"]:
-###                self.board.load_node(ni["node"])
+#                self.board.load_node(ni["node"])
 # TODO
                 self.boardview.shown = self.gamemodel.nodes.index(ni["node"])
                 self.update_selected_node()
@@ -114,17 +112,8 @@ class Sidepanel(gtk.TextView):
     # Recursively insert the node tree
     def insert_nodes(self, node, level=0, ply=0, result=None):
         buf = self.textbuffer
-        #newLine = True
-        #lineInterrupted = False
-        #n = ply+1 / 2       # move number
-        #t = ""
         end_iter = buf.get_end_iter # Convenience shortcut to the function
-        
-        # if it's whites turn
-        #if ply % 2 == 0:
-            #c = True
-        #else:
-            #c = False
+        new_line = False
         
         while (1): 
             start = end_iter().get_offset()
@@ -136,34 +125,10 @@ class Sidepanel(gtk.TextView):
                 node = node.next
                 continue
             
-            if ply > 0:
+            if ply > 0 and not new_line:
                 buf.insert(end_iter(), " ")
             
-            #dotsAdded = False   
             ply += 1
-            #if c:
-                #t = `(ply+1)/2` + "." + node.move
-            #else:
-                #if newLine:
-                    #t = `(ply+1)/2` + "..." + node.move
-                #elif lineInterrupted:
-                    #t = "..." + node.move
-                    #dotsAdded = True
-                #else:
-                    #t = node.move
-                #n += 1
-                
-            #for annotation in node.annotations:
-                ## hack to support NAGs, which should be part of the move notation
-                #if annotation in ("", "!", "?", "!?", "?!", "!!", "??"):
-                    #t = t + annotation
-                #else:
-                    #t = t + " " + annotation
-                
-            #newLine = False
-            #lineInterrupted = False
-            
-#            buf.insert(end_iter(), t + " ")
             buf.insert(end_iter(), node.move + " ")
             
             startIter = buf.get_iter_at_offset(start)
@@ -171,40 +136,19 @@ class Sidepanel(gtk.TextView):
             
             if level == 0:
                 buf.apply_tag_by_name("node", startIter, endIter)
-                #tag = "node"
             elif level == 1:
                 buf.apply_tag_by_name("variation-toplevel", startIter, endIter)
-                #tag = "variation-toplevel"
             elif level % 2 == 0:
                 buf.apply_tag_by_name("variation-even", startIter, endIter)
-                #tag = "variation-even"
             else:
                 buf.apply_tag_by_name("variation-uneven", startIter, endIter)
-                #tag = "variation-uneven"
 
-#            if level > 0:
             buf.apply_tag_by_name("margin", startIter, endIter)
 # TODO      
 #            if node == self.board.node:
             if node == self.gamemodel.nodes[self.boardview.shown]:
                 buf.apply_tag_by_name("selected", startIter, endIter)
             
-            # Custom wrapping hack
-            #width = self.textview.get_visible_rect().width
-            #startX = self.textview.get_iter_location(startIter).x
-            #endX = self.textview.get_iter_location(end_iter()).x
-            #if startX and (endX + RIGHT_MARGIN) > width:
-                #buf.insert(startIter, "\n")
-                ## Ugh...! "Necessary Evil"
-                #if not c:
-                    #startIter.forward_char()
-                    #if dotsAdded:
-                        #buf.insert_with_tags_by_name(startIter, `(ply+1)/2`, tag)
-                    #else:
-                        #buf.insert_with_tags_by_name(startIter, `(ply+1)/2`+"...", tag)
-                    
-                #startIter = buf.get_iter_at_offset(start+1)
-                
             ni = {}
             ni["node"] = node
             ni["start"] = startIter.get_offset()        
@@ -213,16 +157,15 @@ class Sidepanel(gtk.TextView):
             
             # Comments
             if len(node.comments) > 0:
-                lineInterrupted = True
                 for comment in node.comments:
                     self.insert_comment(comment, level)
+
+            new_line = False
 
             # Variations
             if level == 0 and len(node.variations):
                 buf.insert(end_iter(), "\n")
-                ##newLine = True
-            #elif len(node.variations):
-                #lineInterrupted = True
+                new_line = True
             
             for var in node.variations:
                 if level == 0:
@@ -235,41 +178,23 @@ class Sidepanel(gtk.TextView):
                 self.insert_nodes(var[0], level+1, ply-1)
 
                 if level == 0:
-                    buf.insert_with_tags_by_name(end_iter(), "]\n", "margin")
+                    buf.insert(end_iter(), "]\n")
                 elif (level+1) % 2 == 0:
                     buf.insert_with_tags_by_name(end_iter(), ") ", "variation-even", "variation-margin")
                 else:
                     buf.insert_with_tags_by_name(end_iter(), ") ", "variation-uneven", "variation-margin")
             
             if node.next:
-                #c = not c
                 node = node.next
             else:
                 break
+
         if result:
             buf.insert_with_tags_by_name(end_iter(), " "+result, "node")
 
     def insert_comment(self, comment, level=0):
         buf = self.textbuffer
         end_iter = buf.get_end_iter
-        
-        # For our custom wrapping hack, we split the line into words
-        #words = comment.split()
-        #for word in words:
-            #start = end_iter().get_offset()
-            
-            #cstr = " " + word
-            #if level > 0:
-                #buf.insert_with_tags_by_name(end_iter(), cstr, "comment", "margin")
-            #else:
-                #buf.insert_with_tags_by_name(end_iter(), cstr, "comment")
-            
-            #startIter = buf.get_iter_at_offset(start)
-            
-            #width = self.textview.get_visible_rect().width
-            #endX = self.textview.get_iter_location(end_iter()).x
-            #if (endX + RIGHT_MARGIN) > width:
-                #buf.insert(startIter, "\n")
         if level > 0:
             buf.insert_with_tags_by_name(end_iter(), comment, "comment", "margin")
         else:
