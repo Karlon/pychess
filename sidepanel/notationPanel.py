@@ -10,7 +10,7 @@ __active__ = True
 __icon__ = addDataPrefix("glade/panel_moves.svg")
 __desc__ = _("Annotated game")
 
-RIGHT_MARGIN = 2        # Textview margin for our custom line wrapping
+#RIGHT_MARGIN = 2        # Textview margin for our custom line wrapping
 
 
 class Sidepanel(gtk.TextView):
@@ -41,7 +41,8 @@ class Sidepanel(gtk.TextView):
         self.textbuffer.create_tag("variation-even", foreground="darkblue", style="italic")
         self.textbuffer.create_tag("variation-uneven", foreground="darkgreen")
         self.textbuffer.create_tag("selected", background_full_height=True, background="black", foreground="white")
-        self.textbuffer.create_tag("margin", left_margin=20)
+        self.textbuffer.create_tag("margin", left_margin=4)
+        self.textbuffer.create_tag("variation-margin", left_margin=20)
 
     def load (self, gmwidg):
         __widget__ = gtk.ScrolledWindow()
@@ -113,17 +114,17 @@ class Sidepanel(gtk.TextView):
     # Recursively insert the node tree
     def insert_nodes(self, node, level=0, ply=0, result=None):
         buf = self.textbuffer
-        newLine = True
-        lineInterrupted = False
-        n = ply+1 / 2       # move number
-        t = ""
+        #newLine = True
+        #lineInterrupted = False
+        #n = ply+1 / 2       # move number
+        #t = ""
         end_iter = buf.get_end_iter # Convenience shortcut to the function
         
         # if it's whites turn
-        if ply % 2 == 0:
-            c = True
-        else:
-            c = False
+        #if ply % 2 == 0:
+            #c = True
+        #else:
+            #c = False
         
         while (1): 
             start = end_iter().get_offset()
@@ -134,22 +135,23 @@ class Sidepanel(gtk.TextView):
             if not node.move:
                 node = node.next
                 continue
-                
-            buf.insert(end_iter(), " ")
             
-            dotsAdded = False   
+            if ply > 0:
+                buf.insert(end_iter(), " ")
+            
+            #dotsAdded = False   
             ply += 1
-            if c:
-                t = `(ply+1)/2` + "." + node.move
-            else:
-                if newLine:
-                    t = `(ply+1)/2` + "..." + node.move
-                elif lineInterrupted:
-                    t = "..." + node.move
-                    dotsAdded = True
-                else:
-                    t = node.move
-                n += 1
+            #if c:
+                #t = `(ply+1)/2` + "." + node.move
+            #else:
+                #if newLine:
+                    #t = `(ply+1)/2` + "..." + node.move
+                #elif lineInterrupted:
+                    #t = "..." + node.move
+                    #dotsAdded = True
+                #else:
+                    #t = node.move
+                #n += 1
                 
             #for annotation in node.annotations:
                 ## hack to support NAGs, which should be part of the move notation
@@ -158,28 +160,30 @@ class Sidepanel(gtk.TextView):
                 #else:
                     #t = t + " " + annotation
                 
-            newLine = False
-            lineInterrupted = False
+            #newLine = False
+            #lineInterrupted = False
             
-            buf.insert(end_iter(), t + " ")
+#            buf.insert(end_iter(), t + " ")
+            buf.insert(end_iter(), node.move + " ")
             
             startIter = buf.get_iter_at_offset(start)
             endIter = buf.get_iter_at_offset(end_iter().get_offset())
             
             if level == 0:
                 buf.apply_tag_by_name("node", startIter, endIter)
-                tag = "node"
+                #tag = "node"
             elif level == 1:
                 buf.apply_tag_by_name("variation-toplevel", startIter, endIter)
-                tag = "variation-toplevel"
+                #tag = "variation-toplevel"
             elif level % 2 == 0:
                 buf.apply_tag_by_name("variation-even", startIter, endIter)
-                tag = "variation-even"
+                #tag = "variation-even"
             else:
                 buf.apply_tag_by_name("variation-uneven", startIter, endIter)
-                tag = "variation-uneven"
-            if level > 0:
-                buf.apply_tag_by_name("margin", startIter, endIter)
+                #tag = "variation-uneven"
+
+#            if level > 0:
+            buf.apply_tag_by_name("margin", startIter, endIter)
 # TODO      
 #            if node == self.board.node:
             if node == self.gamemodel.nodes[self.boardview.shown]:
@@ -216,34 +220,34 @@ class Sidepanel(gtk.TextView):
             # Variations
             if level == 0 and len(node.variations):
                 buf.insert(end_iter(), "\n")
-                newLine = True
-            elif len(node.variations):
-                lineInterrupted = True
+                ##newLine = True
+            #elif len(node.variations):
+                #lineInterrupted = True
             
             for var in node.variations:
                 if level == 0:
-                    buf.insert_with_tags_by_name(end_iter(), " [", "variation-toplevel", "margin")
+                    buf.insert_with_tags_by_name(end_iter(), "[", "variation-toplevel", "variation-margin")
                 elif (level+1) % 2 == 0:
-                    buf.insert_with_tags_by_name(end_iter(), " (", "variation-even", "margin")
+                    buf.insert_with_tags_by_name(end_iter(), " (", "variation-even", "variation-margin")
                 else:
-                    buf.insert_with_tags_by_name(end_iter(), " (", "variation-uneven", "margin")
+                    buf.insert_with_tags_by_name(end_iter(), " (", "variation-uneven", "variation-margin")
                 
                 self.insert_nodes(var[0], level+1, ply-1)
 
                 if level == 0:
-                    buf.insert(end_iter(), "]\n")
+                    buf.insert_with_tags_by_name(end_iter(), "]\n", "margin")
                 elif (level+1) % 2 == 0:
-                    buf.insert_with_tags_by_name(end_iter(), ") ", "variation-even", "margin")
+                    buf.insert_with_tags_by_name(end_iter(), ") ", "variation-even", "variation-margin")
                 else:
-                    buf.insert_with_tags_by_name(end_iter(), ") ", "variation-uneven", "margin")
+                    buf.insert_with_tags_by_name(end_iter(), ") ", "variation-uneven", "variation-margin")
             
             if node.next:
-                c = not c
+                #c = not c
                 node = node.next
             else:
                 break
         if result:
-            buf.insert_with_tags_by_name(end_iter(), " "+result, tag)
+            buf.insert_with_tags_by_name(end_iter(), " "+result, "node")
 
     def insert_comment(self, comment, level=0):
         buf = self.textbuffer

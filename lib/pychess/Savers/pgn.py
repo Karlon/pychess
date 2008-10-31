@@ -144,7 +144,9 @@ def parse_string(string, model, position, parent=None, variation=False):
                 if parenthesis == 0:
                     node = Node()
                     mstr = m.group(MOVE)
-                    node.move = mstr
+                    if m.group(MOVE_COUNT):
+                        node.move = m.group(MOVE_COUNT).rstrip()
+                    node.move += mstr
 
                     if m.group(MOVE_COMMENT):
                         node.move += m.group(MOVE_COMMENT)
@@ -189,7 +191,7 @@ def parse_string(string, model, position, parent=None, variation=False):
                     last_node.comments.append(text[1:-1].replace('\r\n', ' '))
 
             elif group == COMMENT_NAG:
-                node.move += ' ' + nag_replace(text)
+                node.move += nag_replace(text)
 
             elif group == RESULT:
                 if text == "1/2":
