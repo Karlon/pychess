@@ -211,10 +211,10 @@ class Sidepanel(gtk.TextView):
     def update(self):
         self.textbuffer.set_text('')
         self.nodeIters = []
-        if len(self.gamemodel.nodes) > 0:
+        if len(self.gamemodel.nodes) > self.gamemodel.lowply:
             if self.gamemodel.comment:
                 self.insert_comment(self.gamemodel.comment)
-            self.insert_nodes(self.gamemodel.nodes[0], result=reprResult[self.gamemodel.status])
+            self.insert_nodes(self.gamemodel.nodes[self.gamemodel.lowply], result=reprResult[self.gamemodel.status])
 
     def game_loaded(self, model, uri):
         self.update()

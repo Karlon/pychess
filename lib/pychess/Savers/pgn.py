@@ -232,12 +232,21 @@ class PGNFile (ChessFile):
             else:
                 model.boards = [Board(setup=True)]
 
+        if fenstr:
+            parts = fenstr.split()
+            if len(parts) >= 6:
+                moveNo = int(parts[5]) - 1
+                if parts[1] == 'w':
+                    model.nodes = [None]*moveNo*2
+                else:
+                    model.nodes = [None]*(moveNo*2+1)
+
         del model.moves[:]
         model.status = WAITING_TO_START
         model.reason = UNKNOWN_REASON
         
         model.notation_string = self.games[gameno][1]
-        model.nodes = parse_string(model.notation_string, model, position)
+        model.nodes += parse_string(model.notation_string, model, position)
 
         if model.timemodel:
             blacks = len(model.moves)/2
