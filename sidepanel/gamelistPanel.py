@@ -51,14 +51,14 @@ class Sidepanel(gtk.TreeView):
                 cf = chessFiles[self.uri]
                 games = cf.games
                 for i, game in enumerate(games):
-                    name = cf.get_player_names(i)
-                    elo = cf.get_elo(i)
+                    wname, bname = cf.get_player_names(i)
+                    welo, belo = cf.get_elo(i)
                     result = reprResult[cf.get_result(i)]
                     event = cf.get_event(i)
                     round = cf.get_round(i)
                     y, m, d = cf.get_date(i)
                     edate = str(date(y, m, d))
-                    self.store.append([i, name[0], elo[0], name[1], elo[1],
+                    self.store.append([i, wname, welo, bname, belo,
                                        result, event, round, edate])
         self.tv.set_cursor(model.gameno)
     

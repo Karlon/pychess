@@ -1,5 +1,5 @@
 import re
-import datetime
+from datetime import date
 
 from pychess.Utils.Move import *
 from pychess.Utils.const import *
@@ -287,12 +287,12 @@ class PGNFile (ChessFile):
         return (p1, p2)
     
     def get_date (self, no):
-        date = self._getTag(no,"Date")
-        today = datetime.date.today()
-        if not date:
+        the_date = self._getTag(no,"Date")
+        today = date.today()
+        if not the_date:
             return today.timetuple()[:3]
         return [ s.isdigit() and int(s) or today.timetuple()[i] \
-                 for i,s in enumerate(date.split(".")) ]
+                 for i,s in enumerate(the_date.split(".")) ]
     
     def get_site (self, no):
         return self._getTag(no,"Site") and self._getTag(no,"Site") or "?"
