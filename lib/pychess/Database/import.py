@@ -1,3 +1,4 @@
+import os
 import sys
 from datetime import date
 
@@ -9,7 +10,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relation, backref
 
 from pychess.Utils.const import *
-from pychess.Savers.pgn import load 
+from pychess.Savers.pgn import load
+from pychess.System.prefix import addDataPrefix
 
 
 Base = declarative_base()
@@ -73,15 +75,8 @@ class Game(Base):
             (self.event, self.site, self.game_date, self.round, self.white, self.black, self.result)
 
 
-if __name__ == "__main__":
-    engine = create_engine('sqlite:///:memory:', echo=True)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    
-    metadata = Base.metadata
-    metadata.create_all(engine)     
-    
-    cf = load(open(sys.argv[1]))
+def load2session(file, session):
+    cf = load(open(file))
     
     for i, game in enumerate(cf.games):
         event = cf.get_event(i)
@@ -103,11 +98,27 @@ if __name__ == "__main__":
 
         print i, white, white_elo, black, black_elo, result, event, round, game_date, site
 
-        
+        load
         agame = Game(event, site, game_date, round, white, black, result, white_elo, black_elo, \
                     ply_count, event_date, eco, fen, annotator, source, movetext)
 
         session.add(agame)
 
-    session.commit()
+
+if __name__ == "__main__":
+    path = "sqlite:///" + os.path.join(addDataPrefix("pychess.db"))
     
+    engine = create_engine(path, echo=True)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    metadata = Base.metadata
+    metadata.drop_all(engine)     
+    metadata.create_all(engine)     
+
+    load2session(sys.argv[1], session)
+    
+    session.commit()
+    session.close()
+    
+    sys.exit()
