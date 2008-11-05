@@ -293,6 +293,13 @@ class PGNFile (ChessFile):
             return today.timetuple()[:3]
         return [ s.isdigit() and int(s) or today.timetuple()[i] \
                  for i,s in enumerate(the_date.split(".")) ]
+    def get_event_date (self, no):
+        the_date = self._getTag(no,"EventDate")
+        today = date.today()
+        if not the_date:
+            return today.timetuple()[:3]
+        return [ s.isdigit() and int(s) or today.timetuple()[i] \
+                 for i,s in enumerate(the_date.split(".")) ]
     
     def get_site (self, no):
         return self._getTag(no,"Site") and self._getTag(no,"Site") or "?"

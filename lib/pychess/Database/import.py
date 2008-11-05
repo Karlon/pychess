@@ -5,9 +5,9 @@ from datetime import date
 import __builtin__
 __builtin__.__dict__['_'] = lambda s: s
 
-from sqlalchemy import Table, Column, Integer, String, Date, create_engine, ForeignKey
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relation, backref
+from sqlalchemy import Table, Column, Integer, String, Date, create_engine, ForeignKey
 
 from pychess.Utils.const import *
 from pychess.Savers.pgn import load
@@ -15,6 +15,7 @@ from pychess.System.prefix import addDataPrefix
 
 
 Base = declarative_base()
+
 
 class Name(Base):
      __tablename__ = 'names'
@@ -33,21 +34,21 @@ class Game(Base):
      __tablename__ = 'games'
 
      id = Column(Integer, primary_key=True)
-     event = Column(String)
-     site = Column(String)
-     game_date = Column(String)
+     event = Column(Integer, ForeignKey('names.id'))
+     site = Column(Integer, ForeignKey('names.id'))
+     game_date = Column(Date)
      round = Column(Integer)
-     white = Column(String)
-     black = Column(String)
-     result = Column(Integer)
+     white = Column(Integer, ForeignKey('names.id'))
+     black = Column(Integer, ForeignKey('names.id'))
+     result = Column(String(1))
      white_elo = Column(Integer)
      black_elo = Column(Integer)
      ply_count = Column(Integer)
-     event_date = Column(String)
-     eco = Column(String)
+     event_date = Column(Date)
+     eco = Column(String(3))
      fen = Column(String)
-     annotator = Column(String)
-     source = Column(String)
+     annotator = Column(Integer, ForeignKey('names.id'))
+     source = Column(Integer, ForeignKey('names.id'))
 
      movetext = Column(String)
 
@@ -78,27 +79,44 @@ class Game(Base):
 def load2session(file, session):
     cf = load(open(file))
     
+    names = [(n.name, n.id) for n in session.query(Name)]
+    names = dict(names)
+
+    def get_id(name):
+        if not name:
+            return None
+
+        if name in names:
+            return names[name]
+        else:
+            new_name = Name(name)
+            session.add(new_name)
+            session.commit()
+            names[name] = new_name.id
+            return names[name]
+    
     for i, game in enumerate(cf.games):
-        event = cf.get_event(i)
-        site = cf.get_site(i)
+        event = get_id(cf.get_event(i))
+        site = get_id(cf.get_site(i))
         y, m, d = cf.get_date(i)
-        game_date = str(date(y, m, d))
+        game_date = date(y, m, d)
         round = cf.get_round(i)
         white, black = cf.get_player_names(i)
-        result = cf.get_result(i)
+        white = get_id(white)
+        black = get_id(black)
+        result = reprResult[cf.get_result(i)]
         white_elo, black_elo = cf.get_elo(i)
 
-        ply_count = 0
-        event_date = ""
-        eco = ""
-        fen = ""
-        annotator = ""
-        source = ""
+        ply_count = cf._getTag(i, "PlyCount")
+        y, m, d = cf.get_event_date(i)
+        event_date = date(y, m, d)
+        eco = cf._getTag(i, "ECO")
+        fen = cf._getTag(i, "FEN")
+        annotator = get_id(cf._getTag(i, "Annotator"))
+        source = get_id(cf._getTag(i, "Source"))
         movetext = game[1]
 
-        print i, white, white_elo, black, black_elo, result, event, round, game_date, site
-
-        load
+        print i, event, site, game_date, round, white, black, result
         agame = Game(event, site, game_date, round, white, black, result, white_elo, black_elo, \
                     ply_count, event_date, eco, fen, annotator, source, movetext)
 
@@ -108,7 +126,7 @@ def load2session(file, session):
 if __name__ == "__main__":
     path = "sqlite:///" + os.path.join(addDataPrefix("pychess.db"))
     
-    engine = create_engine(path, echo=True)
+    engine = create_engine(path, echo=False)
     Session = sessionmaker(bind=engine)
     session = Session()
     
@@ -119,6 +137,12 @@ if __name__ == "__main__":
     load2session(sys.argv[1], session)
     
     session.commit()
+
+    names = [(n.id, n.name) for n in session.query(Name)]
+    names = dict(names)
+    for g in session.query(Game):
+        print g.id, g.game_date, names[g.white], names[g.black], g.result, names[g.event], g.ply_count, g.eco
+    
     session.close()
     
     sys.exit()
