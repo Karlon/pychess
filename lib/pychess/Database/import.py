@@ -5,95 +5,62 @@ from datetime import date
 import __builtin__
 __builtin__.__dict__['_'] = lambda s: s
 
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, String, Date, create_engine, ForeignKey
+from profilehooks import profile
+
+from sqlalchemy import Table, Column, Integer, String, Date, create_engine, ForeignKey, MetaData, select
 
 from pychess.Utils.const import *
 from pychess.Savers.pgn import load
 from pychess.System.prefix import addDataPrefix
 
 
-Base = declarative_base()
+metadata = MetaData()
+
+name = Table('names', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('name', String)
+    )
+
+game = Table('games', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('event', Integer, ForeignKey('names.id')),
+    Column('site', Integer, ForeignKey('names.id')),
+    Column('game_date', Date),
+    Column('round', Integer),
+    Column('white', Integer, ForeignKey('names.id')),
+    Column('black', Integer, ForeignKey('names.id')),
+    Column('result', String(1)),
+    Column('white_elo', Integer),
+    Column('black_elo', Integer),
+    Column('ply_count', Integer),
+    Column('event_date', Date),
+    Column('eco', String(3)),
+    Column('fen', String),
+    Column('annotator', Integer, ForeignKey('names.id')),
+    Column('source', Integer, ForeignKey('names.id')),
+    Column('movetext', String)
+    )
 
 
-class Name(Base):
-     __tablename__ = 'names'
-
-     id = Column(Integer, primary_key=True)
-     name = Column(String)
-
-     def __init__(self, name):
-         self.name = name
-
-     def __repr__(self):
-        return "<Name('%s')>" % self.name
-
-
-class Game(Base):
-     __tablename__ = 'games'
-
-     id = Column(Integer, primary_key=True)
-     event = Column(Integer, ForeignKey('names.id'))
-     site = Column(Integer, ForeignKey('names.id'))
-     game_date = Column(Date)
-     round = Column(Integer)
-     white = Column(Integer, ForeignKey('names.id'))
-     black = Column(Integer, ForeignKey('names.id'))
-     result = Column(String(1))
-     white_elo = Column(Integer)
-     black_elo = Column(Integer)
-     ply_count = Column(Integer)
-     event_date = Column(Date)
-     eco = Column(String(3))
-     fen = Column(String)
-     annotator = Column(Integer, ForeignKey('names.id'))
-     source = Column(Integer, ForeignKey('names.id'))
-
-     movetext = Column(String)
-
-     def __init__(self, event, site, game_date, round, white, black, result, white_elo, black_elo, \
-                    ply_count, event_date, eco, fen, annotator, source, movetext):
-        self.event = event
-        self.site = site
-        self.game_date = game_date
-        self.round = round
-        self.white = white
-        self.black = black
-        self.result = result
-        self.white_elo = white_elo
-        self.black_elo = black_elo
-        self.ply_count = ply_count
-        self.event_date = event_date
-        self.eco = eco
-        self.fen = fen
-        self.annotator = annotator
-        self.source = source
-        self.movetext = movetext
-
-     def __repr__(self):
-        return "<Game('%s', '%s', '%s', '%s', '%s', '%s', '%s')>" % \
-            (self.event, self.site, self.game_date, self.round, self.white, self.black, self.result)
-
-
-def load2session(file, session):
+#@profile
+def import_from_pgn(file, conn, game_table, name_table):
     cf = load(open(file))
     
-    names = [(n.name, n.id) for n in session.query(Name)]
-    names = dict(names)
+    s = select([name_table])
+    names = dict([(n.name, n.id) for n in conn.execute(s)])
 
-    def get_id(name):
-        if not name:
+    def get_id(name_str):
+        if not name_str:
             return None
 
-        if name in names:
-            return names[name]
+        if name_str in names:
+            return names[name_str]
         else:
-            new_name = Name(name)
-            session.add(new_name)
-            session.commit()
-            names[name] = new_name.id
-            return names[name]
+            ins_name = name_table.insert()
+            result = conn.execute(ins_name, name=name_str)
+            id = result.last_inserted_ids()[0]
+            names[name_str] = id
+            return id
     
     for i, game in enumerate(cf.games):
         event = get_id(cf.get_event(i))
@@ -116,33 +83,45 @@ def load2session(file, session):
         source = get_id(cf._getTag(i, "Source"))
         movetext = game[1]
 
-        print i, event, site, game_date, round, white, black, result
-        agame = Game(event, site, game_date, round, white, black, result, white_elo, black_elo, \
-                    ply_count, event_date, eco, fen, annotator, source, movetext)
-
-        session.add(agame)
+#        print i, event, site, game_date, round, white, black, result
+        ins_game = game_table.insert()
+        result = conn.execute(ins_game,
+                                event=event,
+                                site=site,
+                                game_date=game_date,
+                                round=round,
+                                white=white,
+                                black=black,
+                                result=result,
+                                white_elo=white_elo,
+                                black_elo=black_elo,
+                                ply_count=ply_count,
+                                event_date=event_date,
+                                eco=eco,
+                                fen=fen,
+                                annotator=annotator,
+                                source=source,
+                                movetext=movetext)
 
 
 if __name__ == "__main__":
     path = "sqlite:///" + os.path.join(addDataPrefix("pychess.db"))
     
-    engine = create_engine(path, echo=False)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    engine = create_engine(path, echo=True)
     
-    metadata = Base.metadata
     metadata.drop_all(engine)     
     metadata.create_all(engine)     
 
-    load2session(sys.argv[1], session)
-    
-    session.commit()
+    conn = engine.connect()
 
-    names = [(n.id, n.name) for n in session.query(Name)]
-    names = dict(names)
-    for g in session.query(Game):
-        print g.id, g.game_date, names[g.white], names[g.black], g.result, names[g.event], g.ply_count, g.eco
+    import_from_pgn(sys.argv[1], conn, game, name)
     
-    session.close()
+    s = select([name])
+    names = dict([(n.id, n.name) for n in conn.execute(s)])
+    print names
+    
+    s = select([game])
+    for g in conn.execute(s):
+        print g[0:7]
     
     sys.exit()
