@@ -90,10 +90,12 @@ def load (file):
     
     for line in file:
         line = line.lstrip()
-        if not line: continue
-        elif line.startswith("%"): continue
+        if not line:
+            continue
+        elif line[0] == "%":
+            continue
         
-        if line.startswith("["):
+        if line[0] == "[":
             if not inTags:
                 files.append(["",""])
                 inTags = True
