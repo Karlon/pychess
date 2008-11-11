@@ -90,12 +90,10 @@ def load (file):
     
     for line in file:
         line = line.lstrip()
-        if not line:
-            continue
-        elif line[0] == "%":
-            continue
+        if not line: continue
+        elif line.startswith("%"): continue
         
-        if line[0] == "[":
+        if line.startswith("["):
             if not inTags:
                 files.append(["",""])
                 inTags = True
@@ -222,6 +220,15 @@ class PGNFile (ChessFile):
         if not model:
             model = GameModel()
 
+        model.tags['Event'] = self.get_event(i)
+        model.tags['Site'] = self.get_site(gameno)
+        y, m, d = self.get_date(i)
+        model.tags['Date'] = str(date(y, m, d))
+        model.tags['Round'] = self.get_round(i)
+        model.tags['White'], model.tags['Black'] = self.get_player_names(i)
+        model.tags['WhiteElo'], model.tags['BlackElo'] = self.get_elo(i)
+        model.tags['Result'] = reprResult[self.get_result(i)]
+
         fenstr = self._getTag(gameno, "FEN")
         variant = self._getTag(gameno, "Variant")
         if variant and ("fischer" in variant.lower() or "960" in variant):
@@ -295,6 +302,7 @@ class PGNFile (ChessFile):
             return today.timetuple()[:3]
         return [ s.isdigit() and int(s) or today.timetuple()[i] \
                  for i,s in enumerate(the_date.split(".")) ]
+
     def get_event_date (self, no):
         the_date = self._getTag(no,"EventDate")
         today = date.today()

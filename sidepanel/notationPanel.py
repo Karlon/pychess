@@ -33,18 +33,20 @@ class Sidepanel(gtk.TextView):
         
         self.textbuffer = self.get_buffer()
         
+        self.textbuffer.create_tag("head1")
+        self.textbuffer.create_tag("head2", weight=pango.WEIGHT_BOLD)
         self.textbuffer.create_tag("node", weight=pango.WEIGHT_BOLD)
-        self.textbuffer.create_tag("comment", foreground="darkred")
+        self.textbuffer.create_tag("comment", foreground="darkblue")
         self.textbuffer.create_tag("variation-toplevel")
-        self.textbuffer.create_tag("variation-even", foreground="darkblue", style="italic")
-        self.textbuffer.create_tag("variation-uneven", foreground="darkgreen")
+        self.textbuffer.create_tag("variation-even", foreground="darkgreen", style="italic")
+        self.textbuffer.create_tag("variation-uneven", foreground="darkred", style="italic")
         self.textbuffer.create_tag("selected", background_full_height=True, background="black", foreground="white")
         self.textbuffer.create_tag("margin", left_margin=4)
         self.textbuffer.create_tag("variation-margin", left_margin=20)
 
     def load (self, gmwidg):
         __widget__ = gtk.ScrolledWindow()
-        __widget__.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        __widget__.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS) #AUTOMATIC)
         __widget__.add(self.textview)
 
         self.boardview = gmwidg.board.view
@@ -201,6 +203,26 @@ class Sidepanel(gtk.TextView):
             buf.insert_with_tags_by_name(end_iter(), comment, "comment")
         buf.insert(end_iter(), " ")
 
+    def insert_header(self, gm):
+        buf = self.textbuffer
+        end_iter = buf.get_end_iter
+        buf.insert(end_iter(), "\n")
+        text = ""
+        event = gm.tags['Event']
+        if event:
+            text +=  event
+        site = gm.tags['Site']
+        if site:
+            text += ', ' + site
+        game_date = gm.tags['Date']
+        if game_date:
+            text += ', ' + game_date
+        buf.insert_with_tags_by_name(end_iter(), text, "head1")
+        buf.insert(end_iter(), "\n")
+        text = gm.tags['White'] + ' - ' + gm.tags['Black'] + ' ' + gm.tags['Result']
+        buf.insert_with_tags_by_name(end_iter(), text, "head2")
+        buf.insert(end_iter(), "\n\n")
+
     def on_expose(self, widget, data):
         w = self.textview.get_allocation().width
         if not w == self.oldWidth:
@@ -212,6 +234,7 @@ class Sidepanel(gtk.TextView):
         self.textbuffer.set_text('')
         self.nodeIters = []
         if len(self.gamemodel.nodes) > self.gamemodel.lowply:
+            self.insert_header(self.gamemodel)
             if self.gamemodel.comment:
                 self.insert_comment(self.gamemodel.comment)
             self.insert_nodes(self.gamemodel.nodes[self.gamemodel.lowply], result=reprResult[self.gamemodel.status])

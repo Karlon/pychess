@@ -76,3 +76,4 @@ class Sidepanel(gtk.TreeView):
         
         # TODO: find a better solution to preserve the actual row
         #self.tv.set_cursor(self.model.gameno)
+        # an independent (from game) gamelist/database window will solve this

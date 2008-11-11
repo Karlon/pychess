@@ -5,9 +5,9 @@ from datetime import date
 import __builtin__
 __builtin__.__dict__['_'] = lambda s: s
 
-from profilehooks import profile
+#from profilehooks import profile
 
-from sqlalchemy import Table, Column, Integer, String, Date, create_engine, ForeignKey, MetaData, select, and_, func
+from sqlalchemy import *
 
 from pychess.Utils.const import *
 from pychess.Savers.pgn import load
@@ -27,20 +27,23 @@ games_table = Table('games', metadata,
     Column('id', Integer, primary_key=True),
     Column('event', Integer, ForeignKey('names.id')),
     Column('site', Integer, ForeignKey('names.id')),
-    Column('game_date', Date),
-    Column('round', Integer),
+    Column('date', Date),
+    Column('round', SmallInteger),
     Column('white', Integer, ForeignKey('names.id')),
     Column('black', Integer, ForeignKey('names.id')),
-    Column('result', String(1)),
-    Column('white_elo', Integer),
-    Column('black_elo', Integer),
-    Column('ply_count', Integer),
+    Column('result', SmallInteger),
+    Column('white_elo', SmallInteger),
+    Column('black_elo', SmallInteger),
+    Column('white_title', String(3)),
+    Column('black_title', String(3)),
+    Column('ply_count', SmallInteger),
     Column('event_date', Date),
-    Column('eco', String(3)),
-    Column('fen', String),
+    Column('eco', CHAR(3)),
+    Column('board', SmallInteger),
+    Column('fen', String(64)),
     Column('annotator', Integer, ForeignKey('names.id')),
     Column('source', Integer, ForeignKey('names.id')),
-    Column('movetext', String)
+    Column('movetext', Text)
     )
 
 #@profile
@@ -50,9 +53,11 @@ def import_from_pgn(file, conn, maxid):
     ins_names = names_table.insert()
     ins_games = games_table.insert()
 
+    # initialise names dict to speed up lookup of names
     s = select([names_table])
     names = dict([(n.name, n.id) for n in conn.execute(s)])
 
+    # collect new names not in names dict yet, and commit them only at end
     name_data = []
     def get_id(name):
         if not name:
@@ -67,8 +72,10 @@ def import_from_pgn(file, conn, maxid):
             names[name] = maxid
             return maxid
 
+    # use transaction to avoid autocommit slowness
     trans = conn.begin()
     try:
+        # collect new games and commit them in big chunks for speed
         game_data = []
         for i, game in enumerate(cf.games):
             event = get_id(cf.get_event(i))
@@ -79,7 +86,7 @@ def import_from_pgn(file, conn, maxid):
             white, black = cf.get_player_names(i)
             white = get_id(white)
             black = get_id(black)
-            result = reprResult[cf.get_result(i)]
+            result = cf.get_result(i)
             white_elo, black_elo = cf.get_elo(i)
 
             ply_count = cf._getTag(i, "PlyCount")
@@ -95,7 +102,7 @@ def import_from_pgn(file, conn, maxid):
                 game_data.append({
                     'event':event,
                     'site':site,
-                    'game_date':game_date,
+                    'date':game_date,
                     'round':round,
                     'white':white,
                     'black':black,
@@ -126,8 +133,10 @@ def import_from_pgn(file, conn, maxid):
         trans.rollback()
         raise
 
+
 if __name__ == "__main__":
-    path = "sqlite:///" + os.path.join(addDataPrefix("pychess.db"))
+    # TODO: make the dbdriver configurable
+    path = "sqlite:///" + os.path.join(addDataPrefix("pychess.pdb"))
     
     engine = create_engine(path, echo=False)
     conn = engine.connect()
@@ -135,6 +144,7 @@ if __name__ == "__main__":
 #    metadata.drop_all(engine)
     metadata.create_all(engine)
 
+    # get the bigest names.id to use it for manual increment
     s = select([func.max(names_table.c.id).label('maxid')])
     maxid = conn.execute(s).scalar()
     if maxid is None:
@@ -142,24 +152,25 @@ if __name__ == "__main__":
 
     import_from_pgn(sys.argv[1], conn, maxid)
 
+    # aliases used for different kind of names
     a1 = names_table.alias()
     a2 = names_table.alias()
     a3 = names_table.alias()
     a4 = names_table.alias()
 
     s = select([games_table.c.id, a1.c.name, a2.c.name, a3.c.name, a4.c.name,
-                games_table.c.game_date, games_table.c.result],
+                games_table.c.date, games_table.c.result, games_table.c.white_elo, games_table.c.black_elo],
                 and_(
                 games_table.c.event==a1.c.id,
                 games_table.c.site==a2.c.id,
                 games_table.c.white==a3.c.id,
                 games_table.c.black==a4.c.id))
                  
-    #for g in conn.execute(s):
-        #print "%s %s %s %s %s %s %s" % (g[0], g[1], g[2], g[3], g[4], g[5], g[6])
+    for g in conn.execute(s):
+        print "%s %s %s %s %s %s %s %s %s" % (g[0], g[1], g[2], g[3], g[4], g[5], reprResult[g[6]], g[7], g[8])
 
-    #s = select([names_table])
-    #names = dict([(n.id, n.name) for n in conn.execute(s)])
-    #print names
+    s = select([names_table])
+    names = dict([(n.id, n.name) for n in conn.execute(s)])
+    print names
 
     sys.exit()
