@@ -220,14 +220,15 @@ class PGNFile (ChessFile):
         if not model:
             model = GameModel()
 
-        model.tags['Event'] = self.get_event(i)
-        model.tags['Site'] = self.get_site(gameno)
-        y, m, d = self.get_date(i)
-        model.tags['Date'] = str(date(y, m, d))
-        model.tags['Round'] = self.get_round(i)
-        model.tags['White'], model.tags['Black'] = self.get_player_names(i)
-        model.tags['WhiteElo'], model.tags['BlackElo'] = self.get_elo(i)
-        model.tags['Result'] = reprResult[self.get_result(i)]
+        model.tags['Event'] = self._getTag(gameno, 'Event')
+        model.tags['Site'] = self._getTag(gameno, 'Site')
+        model.tags['Date'] = self._getTag(gameno, 'Date')
+        model.tags['Round'] = self._getTag(gameno, 'Round')
+        model.tags['White'], model.tags['Black'] = self.get_player_names(gameno)
+        model.tags['WhiteElo'] = self._getTag(gameno, 'WhiteElo')
+        model.tags['BlackElo'] = self._getTag(gameno, 'BlackElo')
+        model.tags['Result'] = reprResult[self.get_result(gameno)]
+        model.tags['ECO'] = self._getTag(gameno, "ECO")
 
         fenstr = self._getTag(gameno, "FEN")
         variant = self._getTag(gameno, "Variant")
@@ -303,14 +304,6 @@ class PGNFile (ChessFile):
         return [ s.isdigit() and int(s) or today.timetuple()[i] \
                  for i,s in enumerate(the_date.split(".")) ]
 
-    def get_event_date (self, no):
-        the_date = self._getTag(no,"EventDate")
-        today = date.today()
-        if not the_date:
-            return today.timetuple()[:3]
-        return [ s.isdigit() and int(s) or today.timetuple()[i] \
-                 for i,s in enumerate(the_date.split(".")) ]
-    
     def get_site (self, no):
         return self._getTag(no,"Site") and self._getTag(no,"Site") or "?"
     

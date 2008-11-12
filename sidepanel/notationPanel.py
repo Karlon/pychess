@@ -204,23 +204,56 @@ class Sidepanel(gtk.TextView):
         buf.insert(end_iter(), " ")
 
     def insert_header(self, gm):
+        # TODO: divide the panel into two window
+        # a header above, and the movetex below
         buf = self.textbuffer
         end_iter = buf.get_end_iter
-        buf.insert(end_iter(), "\n")
-        text = ""
-        event = gm.tags['Event']
-        if event:
-            text +=  event
-        site = gm.tags['Site']
-        if site:
-            text += ', ' + site
-        game_date = gm.tags['Date']
-        if game_date:
-            text += ', ' + game_date
-        buf.insert_with_tags_by_name(end_iter(), text, "head1")
-        buf.insert(end_iter(), "\n")
-        text = gm.tags['White'] + ' - ' + gm.tags['Black'] + ' ' + gm.tags['Result']
+
+        text = "\n" + gm.tags['White']
         buf.insert_with_tags_by_name(end_iter(), text, "head2")
+        white_elo = gm.tags['WhiteElo']
+        if white_elo:
+            buf.insert_with_tags_by_name(end_iter(), " %s" % white_elo, "head1")
+
+        buf.insert_with_tags_by_name(end_iter(), " - ", "head1")
+
+        text = gm.tags['Black']
+        buf.insert_with_tags_by_name(end_iter(), text, "head2")
+        black_elo = gm.tags['BlackElo']
+        if black_elo:
+            buf.insert_with_tags_by_name(end_iter(), " %s" % black_elo, "head1")
+            
+        result = ' ' + gm.tags['Result'] + '\n'
+        buf.insert_with_tags_by_name(end_iter(), result, "head2")
+
+        text = ""
+        eco = gm.tags['ECO']
+        if eco:
+            text += eco
+
+        event = gm.tags['Event']
+        if event and event != "?":
+            if len(text) > 0:
+                text += ', '
+            text += event
+
+        site = gm.tags['Site']
+        if site and site != "?":
+            if len(text) > 0:
+                text += ', '
+            text += site
+
+        round = gm.tags['Round']
+        if round and round != "?":
+            text += ', round ' + round
+
+        game_date = gm.tags['Date']
+        if not '?' in game_date:
+            text += ', ' + game_date
+        elif not '?' in game_date[:4]:
+            text += ', ' + game_date[:4]
+        buf.insert_with_tags_by_name(end_iter(), text, "head1")
+
         buf.insert(end_iter(), "\n\n")
 
     def on_expose(self, widget, data):

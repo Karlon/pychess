@@ -1,5 +1,3 @@
-from datetime import date
-
 import gtk
 
 from pychess.Utils.const import *
@@ -19,13 +17,13 @@ class Sidepanel(gtk.TreeView):
         self.sw = widgets.get_widget("scrolledwindow")
         self.sw.unparent()
         
-        self.store = gtk.ListStore(int, str, str, str, str, str, str, str, str)
+        self.store = gtk.ListStore(int, str, str, str, str, str, str, str, str, str, str)
         self.tv.set_model(self.store)
         self.tv.get_selection().set_mode(gtk.SELECTION_BROWSE)
         self.tv.set_headers_visible(True)
         
         cols = ("No", "White", "W Elo", "Black", "B Elo",
-                "Result", "Event", "Round", "Date")
+                "Result", "Event", "Site", "Round", "Date", "ECO")
         for i, col in enumerate(cols):
             r = gtk.CellRendererText()
             column = gtk.TreeViewColumn(col, r, text=i)
@@ -52,14 +50,16 @@ class Sidepanel(gtk.TreeView):
                 games = cf.games
                 for i, game in enumerate(games):
                     wname, bname = cf.get_player_names(i)
-                    welo, belo = cf.get_elo(i)
+                    welo = cf._getTag(i, "WhiteElo")
+                    belo = cf._getTag(i, "BlackElo")
                     result = reprResult[cf.get_result(i)]
-                    event = cf.get_event(i)
-                    round = cf.get_round(i)
-                    y, m, d = cf.get_date(i)
-                    edate = str(date(y, m, d))
+                    event = cf._getTag(i, 'Event')
+                    site = cf._getTag(i, 'Site')
+                    round = cf._getTag(i, "Round")
+                    date = cf._getTag(i, "Date")
+                    eco = cf._getTag(i, "ECO")
                     self.store.append([i, wname, welo, bname, belo,
-                                       result, event, round, edate])
+                                       result, event, site, round, date, eco])
         self.tv.set_cursor(model.gameno)
     
     def row_activated (self, widget, path, col):
