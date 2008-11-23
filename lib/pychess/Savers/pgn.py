@@ -141,45 +141,44 @@ def parse_string(string, model, position, parent=None, variation=False):
 
         if parenthesis == 0:
             if group == FULL_MOVE:
-                if parenthesis == 0:
-                    node = Node()
-                    mstr = m.group(MOVE)
-                    if m.group(MOVE_COUNT):
-                        node.move = m.group(MOVE_COUNT).rstrip()
-                    node.move += mstr
+                node = Node()
+                mstr = m.group(MOVE)
+                if m.group(MOVE_COUNT):
+                    node.move = m.group(MOVE_COUNT).rstrip()
+                node.move += mstr
 
-                    if m.group(MOVE_COMMENT):
-                        node.move += m.group(MOVE_COMMENT)
+                if m.group(MOVE_COMMENT):
+                    node.move += m.group(MOVE_COMMENT)
 
-                    if last_node:
-                        node.previous = last_node
-                        last_node.next = node
-                    nodes.append(node)
-                    last_node = node
+                if last_node:
+                    node.previous = last_node
+                    last_node.next = node
+                nodes.append(node)
+                last_node = node
 
-                    if not variation:
-                        if position != -1 and model.ply >= position:
-                            break
+                if not variation:
+                    if position != -1 and model.ply >= position:
+                        break
 
-                        try:
-                            move = parseAny (model.boards[-1], mstr)
-                        except ParsingError, e:
-                            notation, reason, boardfen = e.args
-                            ply = model.boards[-1].ply
-                            if ply % 2 == 0:
-                                moveno = "%d." % (i/2+1)
-                            else: moveno = "%d..." % (i/2+1)
-                            errstr1 = _("The game can't be read to end, because of an error parsing move %s '%s'.") % (moveno, notation)
-                            errstr2 = _("The move failed because %s.") % reason
-                            error = LoadingError (errstr1, errstr2)
-                            break
+                    try:
+                        move = parseAny (model.boards[-1], mstr)
+                    except ParsingError, e:
+                        notation, reason, boardfen = e.args
+                        ply = model.boards[-1].ply
+                        if ply % 2 == 0:
+                            moveno = "%d." % (i/2+1)
+                        else: moveno = "%d..." % (i/2+1)
+                        errstr1 = _("The game can't be read to end, because of an error parsing move %s '%s'.") % (moveno, notation)
+                        errstr2 = _("The move failed because %s.") % reason
+                        error = LoadingError (errstr1, errstr2)
+                        break
 
-                        model.moves.append(move)
-                        model.boards.append(model.boards[-1].move(move))
-                        node.board = model.boards[-1] 
-                    
-                        # This is for the sidepanels
-                        model.emit("game_changed")
+                    model.moves.append(move)
+                    model.boards.append(model.boards[-1].move(move))
+                    node.board = model.boards[-1] 
+                
+                    # This is for the sidepanels
+                    model.emit("game_changed")
 
             elif group == COMMENT_REST:
                 last_node.comments.append(text[1:])
