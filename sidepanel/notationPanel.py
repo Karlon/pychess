@@ -89,7 +89,10 @@ class Sidepanel(gtk.TextView):
             if offset >= ni["start"] and offset < ni["end"]:
 #                self.board.load_node(ni["node"])
 # TODO
-                self.boardview.shown = self.gamemodel.nodes.index(ni["node"])
+                try:
+                    self.boardview.shown = self.gamemodel.boards.index(ni["node"])
+                except:
+                    print 'TODO: boardview.shown'
                 self.update_selected_node()
                 break
         return True
@@ -97,20 +100,22 @@ class Sidepanel(gtk.TextView):
     # Update the selected node highlight
     def update_selected_node(self):
         self.textbuffer.remove_tag_by_name("selected", self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter())
-        
-        start = None    
-        for ni in self.nodeIters:
-# TODO
-#            if ni["node"] == self.board.node:
-            if ni["node"] == self.gamemodel.nodes[self.boardview.shown]:
-                start = self.textbuffer.get_iter_at_offset(ni["start"])
-                end = self.textbuffer.get_iter_at_offset(ni["end"])
-                self.textbuffer.apply_tag_by_name("selected", start, end)
-                break
-        
-        if start:
-            self.textview.scroll_to_iter(start, 0, use_align=False, yalign=0.1)
-    
+        try:
+            start = None    
+            for ni in self.nodeIters:
+    # TODO
+    #            if ni["node"] == self.board.node:
+                if ni["node"] == self.gamemodel.boards[self.boardview.shown]:
+                    start = self.textbuffer.get_iter_at_offset(ni["start"])
+                    end = self.textbuffer.get_iter_at_offset(ni["end"])
+                    self.textbuffer.apply_tag_by_name("selected", start, end)
+                    break
+            
+            if start:
+                self.textview.scroll_to_iter(start, 0, use_align=False, yalign=0.1)
+        except:
+            print "TODO: boardview.shown"
+
     # Recursively insert the node tree
     def insert_nodes(self, node, level=0, ply=0, result=None):
         buf = self.textbuffer
@@ -123,7 +128,7 @@ class Sidepanel(gtk.TextView):
             if not node:
                 break
             
-            if not node.move:
+            if not node.movestr:
                 node = node.next
                 continue
             
@@ -131,7 +136,7 @@ class Sidepanel(gtk.TextView):
                 buf.insert(end_iter(), " ")
             
             ply += 1
-            buf.insert(end_iter(), node.move + " ")
+            buf.insert(end_iter(), node.movestr + " ")
             
             startIter = buf.get_iter_at_offset(start)
             endIter = buf.get_iter_at_offset(end_iter().get_offset())
@@ -148,8 +153,11 @@ class Sidepanel(gtk.TextView):
             buf.apply_tag_by_name("margin", startIter, endIter)
 # TODO      
 #            if node == self.board.node:
-            if node == self.gamemodel.nodes[self.boardview.shown]:
-                buf.apply_tag_by_name("selected", startIter, endIter)
+            try:
+                if node == self.gamemodel.boards[self.boardview.shown]:
+                    buf.apply_tag_by_name("selected", startIter, endIter)
+            except:
+                print "TODO: boardview.shown"
             
             ni = {}
             ni["node"] = node
@@ -266,11 +274,11 @@ class Sidepanel(gtk.TextView):
     def update(self):
         self.textbuffer.set_text('')
         self.nodeIters = []
-        if len(self.gamemodel.nodes) > self.gamemodel.lowply:
+        if len(self.gamemodel.boards) > self.gamemodel.lowply:
             self.insert_header(self.gamemodel)
             if self.gamemodel.comment:
                 self.insert_comment(self.gamemodel.comment)
-            self.insert_nodes(self.gamemodel.nodes[self.gamemodel.lowply], result=reprResult[self.gamemodel.status])
+            self.insert_nodes(self.gamemodel.boards[self.gamemodel.lowply], result=reprResult[self.gamemodel.status])
 
     def game_loaded(self, model, uri):
         self.update()

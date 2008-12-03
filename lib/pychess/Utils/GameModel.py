@@ -67,9 +67,8 @@ class GameModel (GObject, PooledThread):
         self.uri = None
         self.gameno = 0
 
-        self.nodes = []
         self.comment = ""
-        
+       
         self.spectactors = {}
         
         self.applyingMoveLock = RLock()

@@ -21,6 +21,14 @@ class Board:
     def __init__ (self, setup=False):
         self.data = [[None]*8 for i in xrange(8)]
         self.board = LBoard(self.variant)
+
+        self.movestr = ""    # algebraic notation of the move
+        self.comments = []
+        self.annotations = []
+        self.variations = []
+        self.parent = None
+        self.next = None
+        self.previous = None
         
         if setup:
             if setup == True:

@@ -110,13 +110,13 @@ def load (file):
     return PGNFile (files)
 
 
-def parse_string(string, model, position, parent=None, variation=False):
-    nodes = []
+def parse_string(string, model, board, position, parent=None, variation=False):
+    boards = []
 
-    node = Node()
-    node.parent = parent
-    last_node = node
-    nodes.append(node)
+    board = board.clone()
+    board.parent = parent
+    last_board = board
+    boards.append(board)
 
     error = None
     parenthesis = 0
@@ -129,68 +129,69 @@ def parse_string(string, model, position, parent=None, variation=False):
         if group == VARIATION_END:
             parenthesis -= 1
             if parenthesis == 0:
-                v_last_node.variations.append(parse_string(v_string[:-1], model, position, v_parent, True))
+                v_last_board.variations.append(parse_string(v_string[:-1], model, board.previous, position, v_parent, True))
                 v_string = ""
                 continue
 
         elif group == VARIATION_START:
             parenthesis += 1
             if parenthesis == 1:
-                v_parent = node
-                v_last_node = last_node
+                v_parent = board.previous
+                v_last_board = last_board
 
         if parenthesis == 0:
             if group == FULL_MOVE:
-                node = Node()
-                mstr = m.group(MOVE)
-                if m.group(MOVE_COUNT):
-                    node.move = m.group(MOVE_COUNT).rstrip()
-                node.move += mstr
-
-                if m.group(MOVE_COMMENT):
-                    node.move += m.group(MOVE_COMMENT)
-
-                if last_node:
-                    node.previous = last_node
-                    last_node.next = node
-                nodes.append(node)
-                last_node = node
-
                 if not variation:
                     if position != -1 and model.ply >= position:
                         break
 
-                    try:
-                        move = parseAny (model.boards[-1], mstr)
-                    except ParsingError, e:
-                        notation, reason, boardfen = e.args
-                        ply = model.boards[-1].ply
-                        if ply % 2 == 0:
-                            moveno = "%d." % (i/2+1)
-                        else: moveno = "%d..." % (i/2+1)
-                        errstr1 = _("The game can't be read to end, because of an error parsing move %s '%s'.") % (moveno, notation)
-                        errstr2 = _("The move failed because %s.") % reason
-                        error = LoadingError (errstr1, errstr2)
-                        break
+                mstr = m.group(MOVE)
+                try:
+                    move = parseAny (boards[-1], mstr)
+                except ParsingError, e:
+                    notation, reason, boardfen = e.args
+                    ply = boards[-1].ply
+                    if ply % 2 == 0:
+                        moveno = "%d." % (i/2+1)
+                    else: moveno = "%d..." % (i/2+1)
+                    errstr1 = _("The game can't be read to end, because of an error parsing move %s '%s'.") % (moveno, notation)
+                    errstr2 = _("The move failed because %s.") % reason
+                    error = LoadingError (errstr1, errstr2)
+                    break
 
-                    model.moves.append(move)
-                    model.boards.append(model.boards[-1].move(move))
-                    node.board = model.boards[-1] 
-                
+                board = boards[-1].move(move)
+
+                if m.group(MOVE_COUNT):
+                    board.movestr = m.group(MOVE_COUNT).rstrip()
+                board.movestr += mstr
+
+                if m.group(MOVE_COMMENT):
+                    board.movestr += m.group(MOVE_COMMENT)
+
+                if last_board:
+                    board.previous = last_board
+                    last_board.next = board
+
+                boards.append(board)
+                last_board = board
+
+                if not variation:
                     # This is for the sidepanels
+                    model.moves.append(move)
+                    model.boards.append(board)
                     model.emit("game_changed")
 
             elif group == COMMENT_REST:
-                last_node.comments.append(text[1:])
+                last_board.comments.append(text[1:])
 
             elif group == COMMENT_BRACE:
-                if node.parent is None and node.previous is None:
+                if board.parent is None and board.previous is None:
                     model.comment = text[1:-1].replace('\r\n', ' ')
                 else:
-                    last_node.comments.append(text[1:-1].replace('\r\n', ' '))
+                    last_board.comments.append(text[1:-1].replace('\r\n', ' '))
 
             elif group == COMMENT_NAG:
-                node.move += nag_replace(text)
+                board.movestr += nag_replace(text)
 
             elif group == RESULT:
                 if text == "1/2":
@@ -205,7 +206,7 @@ def parse_string(string, model, position, parent=None, variation=False):
         if error:
             raise error
 
-    return nodes
+    return boards
 
 
 class PGNFile (ChessFile):
@@ -237,25 +238,16 @@ class PGNFile (ChessFile):
             model.boards = [FRCBoard(fenstr)]
         else:
             if fenstr:
-                model.boards = [Board(fenstr)]
+                model.boards.append(Board(fenstr))
             else:
                 model.boards = [Board(setup=True)]
-
-        if fenstr:
-            parts = fenstr.split()
-            if len(parts) >= 6:
-                moveNo = int(parts[5]) - 1
-                if parts[1] == 'w':
-                    model.nodes = [None]*moveNo*2
-                else:
-                    model.nodes = [None]*(moveNo*2+1)
 
         del model.moves[:]
         model.status = WAITING_TO_START
         model.reason = UNKNOWN_REASON
         
         model.notation_string = self.games[gameno][1]
-        model.nodes += parse_string(model.notation_string, model, position)
+        model.boards = parse_string(model.notation_string, model, model.boards[-1], position)
 
         if model.timemodel:
             blacks = len(model.moves)/2
@@ -322,25 +314,6 @@ class PGNFile (ChessFile):
         if self._getTag(no,"Result") in pgn2Const:
             return pgn2Const[self._getTag(no,"Result")]
         return RUNNING
-
-
-class Node:
-    def __init__(self):
-        self.move = ""    # algebraic notation of the move
-        self.comments = []
-        self.annotations = []
-        self.board = None
-        self.variations = []
-        self.parent = None
-        self.next = None
-        self.previous = None
-    
-    def __repr__(self):
-        x = self.move
-        for v in self.variations:
-            print '-',v,'-'
-            x += repr(v)
-        return x
 
 
 def nag_replace(nag):

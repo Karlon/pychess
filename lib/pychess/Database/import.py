@@ -202,7 +202,7 @@ def print_db(conn):
 if __name__ == "__main__":
     # TODO: make the dbdriver configurable
     #path = "sqlite:///" + os.path.join(addDataPrefix("pychess.pdb"))
-    path = "firebird://sysdba:masterkey@localhost//home/tamas/data/pychess.db"
+    path = "firebird://sysdba:masterkey@localhost//home/tamas/data/pychess.fdb"
     
     engine = create_engine(path, echo=False)
     conn = engine.connect()
