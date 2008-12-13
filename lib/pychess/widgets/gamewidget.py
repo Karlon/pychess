@@ -51,15 +51,15 @@ light_on = lookup16("stock_3d-light-on", "weather-clear")
 light_off = lookup16("stock_3d-light-off", "weather-clear-night")
 gtk_close = lookup16("gtk-close")
 
-media_previous = lookup16("stock_media-prev")
-media_rewind = lookup16("stock_media-rew")
-media_forward = lookup16("stock_media-fwd")
-media_next = lookup16("stock_media-next")
+media_previous = lookup16("gtk-media-previous-ltr")
+media_rewind = lookup16("gtk-media-rewind-ltr")
+media_forward = lookup16("gtk-media-forward-ltr")
+media_next = lookup16("gtk-media-next-ltr")
 
 GAME_MENU_ITEMS = ("save_game1", "save_game_as1", "properties1", "close1")
 ACTION_MENU_ITEMS = ("draw", "pause1", "resume1", "undo1", 
                      "call_flag", "resign", "ask_to_move")
-VIEW_MENU_ITEMS = ("rotate_board1", "hint_mode", "spy_mode")
+VIEW_MENU_ITEMS = ("rotate_board1", "show_sidepanels", "hint_mode", "spy_mode")
 MENU_ITEMS = GAME_MENU_ITEMS + ACTION_MENU_ITEMS + VIEW_MENU_ITEMS
 
 path = prefix.addDataPrefix("sidepanel")
@@ -270,6 +270,9 @@ def delGameWidget (gmwidg):
     """ Remove the widget from the GUI after the game has been terminated """
     gmwidg.emit("closed")
     
+    if len(key2gmwidg) == 1:
+        getWidgets()["show_sidepanels"].set_active(True)
+    
     del key2gmwidg[gmwidg.notebookKey]
     pageNum = gmwidg.getPageNumber()
     headbook = getheadbook()
@@ -477,22 +480,11 @@ def getheadbook ():
         return None
     return widgets["mainvbox"].get_children()[1].child
 
-
 def zoomToBoard (viewZoomed):
-    def setStuffColor (color):
-        for boardvbox in notebooks["board"].get_children():
-            ccalign, boardcontrol = boardvbox.get_children()
-            ccalign.child.modify_bg(ccalign.child.state, color)
-            boardcontrol.view.modify_bg(boardcontrol.view.state, color)
-    
     if viewZoomed:
-        dockAlign.remove(dock)
-        parent = notebooks["board"].get_parent()
-        parent.remove(notebooks["board"])
-        dockAlign.add(notebooks["board"])
-        setStuffColor(boardvbox.get_style().bg[ccalign.child.state])
+        notebooks["board"].get_parent().get_parent().zoomUp()
     else:
-        setStuffColor(notebooks["board"].get_style().bg[ccalign.child.state])
+        notebooks["board"].get_parent().get_parent().zoomDown()
 
 def show_tabs (show):
     if show:
