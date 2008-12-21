@@ -269,16 +269,12 @@ class CECPEngine (ProtocolEngine):
         
         self.changeLock.acquire()
         try:
-            # Make the move
-            self.board = board1
-            
-            #if self.isAnalyzing():
-            #    del self.analyzeMoves[:]
-            
-            if not board2 or self.gonext:
+            if self.board == board1 or not board2 or self.gonext:
+                self.board = board1
                 self.__go()
                 self.gonext = False
             else:
+                self.board = board1
                 self.__usermove(board2, move)
                 
                 if self.forced:
@@ -374,7 +370,10 @@ class CECPEngine (ProtocolEngine):
         
         self.__setPonder(strength >= 7)
         
-        self.optionQueue.append("random")
+        if strength == 8:
+            self.optionQueue.append("egtb")
+        else:
+            self.optionQueue.append("random")
     
     def __setDepth (self, depth):
         self.optionQueue.append("sd %d" % depth)
@@ -704,7 +703,7 @@ class CECPEngine (ProtocolEngine):
                     if value == 1:
                         self.returnQueue.put("ready")
                     elif value == 0:
-                        log.warn("Adds 10 minutes timeout", repr(self))
+                        log.log("Adds 10 minutes timeout", self.defname)
                         # This'll buy you 10 more minutes
                         self.timeout = time.time()+10*60
                         self.returnQueue.put("not ready")
