@@ -13,6 +13,7 @@ from pychess.System.protoopen import protoopen, protosave, isWriteable
 from pychess.System.Log import log
 from pychess.System import glock
 from pychess.Variants.normal import NormalChess
+from pychess.Utils.Move import toSAN
 
 from logic import getStatus, isClaimableDraw
 from const import *
@@ -339,9 +340,19 @@ class GameModel (GObject, PooledThread):
             self.applyingMoveLock.acquire()
             try:
                 self.needsSave = True
+
                 newBoard = self.boards[-1].move(move)
+                newBoard.previous = self.boards[-1]
+                if self.ply % 2 == 0:
+                    move_count = str((self.ply+1)/2 + 1)+"."
+                else:
+                    move_count = ""
+                newBoard.movestr = move_count + toSAN(self.boards[-1], move)
+
+                self.boards[-1].next = newBoard
                 self.boards.append(newBoard)
                 self.moves.append(move)
+
                 if self.timemodel:
                     self.timemodel.tap()
                 if not self.checkStatus():

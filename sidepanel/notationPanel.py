@@ -2,8 +2,10 @@ import gtk
 import pango
 
 from pychess.Utils.const import *
-from pychess.System.prefix import addDataPrefix
+from pychess.System import conf
 from pychess.System.glock import glock_connect
+from pychess.System.prefix import addDataPrefix
+from pychess.Utils.Move import toSAN, toFAN
 
 __title__ = _("Annotation")
 __active__ = True
@@ -50,6 +52,8 @@ class Sidepanel(gtk.TextView):
         __widget__.add(self.textview)
 
         self.boardview = gmwidg.board.view
+        glock_connect(self.boardview.model, "game_changed", self.game_changed)
+        glock_connect(self.boardview.model, "moves_undoing", self.moves_undoing)
         self.boardview.connect("shown_changed", self.shown_changed)
 
         self.gamemodel = gmwidg.board.view.model
@@ -199,7 +203,7 @@ class Sidepanel(gtk.TextView):
             else:
                 break
 
-        if result:
+        if result and result != "*":
             buf.insert_with_tags_by_name(end_iter(), " "+result, "node")
 
     def insert_comment(self, comment, level=0):
@@ -217,7 +221,11 @@ class Sidepanel(gtk.TextView):
         buf = self.textbuffer
         end_iter = buf.get_end_iter
 
-        text = "\n" + gm.tags['White']
+        try:
+            text = "\n" + gm.tags['White']
+        except:
+            # pgn not processed yet
+            return
         buf.insert_with_tags_by_name(end_iter(), text, "head2")
         white_elo = gm.tags['WhiteElo']
         if white_elo:
@@ -284,4 +292,26 @@ class Sidepanel(gtk.TextView):
         self.update()
             
     def shown_changed (self, board, shown):
+        self.update_selected_node()
+
+    def moves_undoing (self, game, moves):
+        assert game.ply > 0, "Can't undo when ply <= 0"
+        # TODO: for i in xrange(moves):
+
+    def game_changed (self, game):
+        node = game.getBoardAtPly(game.ply)
+        buf = self.textbuffer
+        end_iter = buf.get_end_iter
+        start = end_iter().get_offset()
+
+        buf.insert(end_iter(), node.movestr + " ")
+        startIter = buf.get_iter_at_offset(start)
+        endIter = buf.get_iter_at_offset(end_iter().get_offset())
+        buf.apply_tag_by_name("node", startIter, endIter)
+
+        ni = {}
+        ni["node"] = node
+        ni["start"] = startIter.get_offset()        
+        ni["end"] = end_iter().get_offset()
+        self.nodeIters.append(ni)
         self.update_selected_node()
