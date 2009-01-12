@@ -30,7 +30,7 @@ class Publisher (PooledThread):
     def run (self):
         while True:
             v = self.queue.get()
-            if v == None:
+            if v == self.StopNow:
                 break
             glock.acquire()
             try:
@@ -40,7 +40,10 @@ class Publisher (PooledThread):
                         v = self.queue.get_nowait()
                     except Queue.Empty:
                         break
-                    else: l.append(v)
+                    else:
+                        if v == self.StopNow:
+                            break
+                        l.append(v)
                 
                 if self.sendPolicy == self.SEND_LIST:
                     self.func(l)
@@ -53,7 +56,9 @@ class Publisher (PooledThread):
         self.queue.put(task)
     
     def __del__ (self):
-        self.queue.put(None)
+        self.queue.put(self.StopNow)
+    
+    class StopNow(Exception): pass
 
 class EmitPublisher (Publisher):
     """ EmitPublisher is a version of Publisher made for the common task of

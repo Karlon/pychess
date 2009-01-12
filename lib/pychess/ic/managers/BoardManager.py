@@ -11,7 +11,7 @@ names = "(\w+)(?:\(([CUHIFWM])\))?"
 # FIXME: What about names like: Nemisis(SR)(CA)(TM) and Rebecca(*)(SR)(TD) ?
 types = "(blitz|lightning|standard)"
 rated = "(rated|unrated)"
-ratings = "\(([0-9\ \-\+]{4}|UNR)\)"
+ratings = "\(([0-9\ \-\+]+|UNR)\)"
 sanmove = "([a-hxOoKQRBN0-8+#=-]{2,7})"
 
 moveListNames = re.compile("%s %s vs. %s %s --- .*" %
@@ -33,6 +33,13 @@ relations = { "-3": IC_POS_ISOLATED,
               "-1": IC_POS_OP_TO_MOVE,
                "1": IC_POS_ME_TO_MOVE,
                "0": IC_POS_OBSERVING }
+
+# TODO: Fischer and other wild
+#Creating: Lobais (----) GuestGFDC (++++) unrated wild/fr 2 12
+#{Game 155 (Lobais vs. GuestGFDC) Creating unrated wild/fr match.}
+
+#<12> bqrknbnr pppppppp -------- -------- -------- -------- PPPPPPPP BQRKNBNR W -1 1 1 1 1 0 155 Lobais GuestGFDC 1 2 12 39 39 120 120 1 none (0:00) none 0 0 0
+
 
 class BoardManager (GObject):
     
@@ -306,6 +313,7 @@ class BoardManager (GObject):
         
         if gameno == self.ourGameno:
             self.emit("curGameEnded", gameno, result, reason)
+            self.ourGameno = ""
         else:
             f = lambda: self.emit("obsGameEnded", gameno, result, reason)
             if gameno in self.queuedCalls:
@@ -325,6 +333,9 @@ class BoardManager (GObject):
     ############################################################################
     #   Interacting                                                            #
     ############################################################################
+    
+    def isPlaying (self):
+        return bool(self.ourGameno)
     
     def sendMove (self, move):
         print >> self.connection.client, move
