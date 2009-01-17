@@ -41,6 +41,9 @@ class ThreadPool:
                 a.setDaemon(True)
                 a.start()
             else:
+                a = self.queue.get(timeout=5)
+                from pychess.System.Log import log
+                log.warn("Couldn't get a thread after 5s")
                 a = self.queue.get()
         
         a.func = lambda: func(*args, **kw)
@@ -94,7 +97,7 @@ class ThreadPool:
                     self.wcond.acquire()
                     self.wcond.wait()
             except:
-                self.threads -= 1
+                #self.threads -= 1
                 if self.running:
                     raise
         
