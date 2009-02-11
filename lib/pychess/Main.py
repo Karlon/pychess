@@ -106,7 +106,11 @@ class GladeHandlers:
     
     def on_rotate_board1_activate (widget):
         gmwidg = gamewidget.cur_gmwidg()
-        gmwidg.board.view.rotation += math.pi
+        if gmwidg.board.view.rotation:
+            gmwidg.board.view.rotation = 0
+        else:
+            gmwidg.board.view.rotation = math.pi
+
     
     def on_fullscreen1_activate (widget):
         gamewidget.getWidgets()["window1"].fullscreen()
@@ -241,12 +245,9 @@ class PyChess:
     
     def handleArgs (self, args):
         if args:
-            def do ():
+            def do (discoverer):
                 newGameDialog.LoadFileExtension.run(args[0], chessFiles)
-                glock.release()
-            # For this once we do an idle_add. We do so to ensure the window is
-            # set up before we start doing other things
-            gobject.idle_add(do)
+            glock.glock_connect_after(discoverer, "all_engines_discovered", do)
 
 def run (args):
     #import gtkexcepthook

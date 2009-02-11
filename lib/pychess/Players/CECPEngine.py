@@ -56,7 +56,7 @@ anare = re.compile("""
 whitespaces = re.compile(r"\s+")
 
 def semisynced(f):
-    """ All moveSynced methods will be qued up, and called in the right
+    """ All moveSynced methods will be queued up, and called in the right
         order after self.readyMoves is true """
     def newFunction(*args, **kw):
         self = args[0]
@@ -111,7 +111,7 @@ class CECPEngine (ProtocolEngine):
         self.timeout = None
         
         self.returnQueue = Queue.Queue()
-        self.engine.connect("line", self.parseLine)
+        self.engine.connect("line", self.parseLines)
         self.engine.connect("died", lambda e: self.returnQueue.put("del"))
         
         self.funcQueue = []
@@ -175,15 +175,15 @@ class CECPEngine (ProtocolEngine):
             print >> self.engine, command
     
     def __onReadyForMoves (self, self_):
-        self.readyMoves = True
-        semisynced(lambda s:None)(self)
-        
         # If we are an analyzer, this signal was already called in a different
         # thread, so we can safely block it.
         if self.mode in (ANALYZING, INVERSE_ANALYZING):
             if not self.board:
                 self.board = Board(setup=True)
             self.__sendAnalyze(self.mode == INVERSE_ANALYZING)
+        
+        self.readyMoves = True
+        semisynced(lambda s:None)(self)
     
     #===========================================================================
     #    Ending the game
@@ -360,6 +360,8 @@ class CECPEngine (ProtocolEngine):
         #==================================================#
     
     def setOptionStrength (self, strength):
+        self.strength = strength
+        
         if 4 <= strength <= 7:
             self.__setTimeHandicap(0.1 * 2**(strength-4))
         
@@ -574,7 +576,11 @@ class CECPEngine (ProtocolEngine):
     #    Parsing
     #===========================================================================
     
-    def parseLine (self, engine, line):
+    def parseLines (self, engine, lines):
+        for line in lines:
+            self.__parseLine(line)
+    
+    def __parseLine (self, line):
         parts = whitespaces.split(line.strip())
         
         if parts[0] == "pong":
@@ -662,6 +668,12 @@ class CECPEngine (ProtocolEngine):
         # Tell Somebody
         if parts[0][:4] == "tell" and \
                 parts[0][4:] in ("others", "all", "ics", "icsnoalias"):
+            
+            # Crafty sometimes only resign to ics :S
+            #if parts[1] == "resign":
+            #    self.emit("offer", Offer(RESIGNATION))
+            #    log.warn("Interpreted tellics as a wish to resign")
+            #else:
             log.log("Ignoring tell %s: %s\n" % (parts[0][4:], " ".join(parts[1:])))
             return
         

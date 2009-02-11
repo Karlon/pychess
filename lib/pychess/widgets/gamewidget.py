@@ -182,15 +182,19 @@ class GameWidget (gobject.GObject):
         startbut = gtk.Button()
         startbut.add(createImage(media_previous))
         startbut.set_relief(gtk.RELIEF_NONE)
+        startbut.set_tooltip_text(_("Jump to initial position"))
         backbut = gtk.Button()
         backbut.add(createImage(media_rewind))
         backbut.set_relief(gtk.RELIEF_NONE)
+        backbut.set_tooltip_text(_("Step back one move"))
         forwbut = gtk.Button()
         forwbut.add(createImage(media_forward))
         forwbut.set_relief(gtk.RELIEF_NONE)
+        forwbut.set_tooltip_text(_("Step forward one move"))
         endbut = gtk.Button()
         endbut.add(createImage(media_next))
         endbut.set_relief(gtk.RELIEF_NONE)
+        endbut.set_tooltip_text(_("Jump to latest position"))
         startbut.connect("clicked", lambda w: board.view.showFirst())
         backbut.connect("clicked", lambda w: board.view.showPrevious())
         forwbut.connect("clicked", lambda w: board.view.showNext())
@@ -250,14 +254,18 @@ class GameWidget (gobject.GObject):
         else:
             messageDialog.child.remove(hbuttonbox)
             buttonbox = hbuttonbox
+            buttonbox.props.layout_style = gtk.BUTTONBOX_SPREAD
         
         messageDialog.child.remove(message)
         texts = message.get_children()[1]
+        message.set_child_packing(texts, False, False, 0, gtk.PACK_START)
         text1, text2 = texts.get_children()
-        texts.set_child_packing(text1, True, False, 0, gtk.PACK_START)
-        texts.set_child_packing(text2, True, False, 0, gtk.PACK_START)
-        texts.set_spacing(0)
-        message.pack_end(buttonbox, False, False)
+        text1.props.yalign = 1
+        text2.props.yalign = 0
+        texts.set_child_packing(text1, True, True, 0, gtk.PACK_START)
+        texts.set_child_packing(text2, True, True, 0, gtk.PACK_START)
+        texts.set_spacing(3)
+        message.pack_end(buttonbox, True, True)
         if self.messageSock.child:
             self.messageSock.remove(self.messageSock.child)
         self.messageSock.add(message)

@@ -6,8 +6,6 @@ from pychess.System.Log import log
 from pychess.System.ThreadPool import PooledThread
 from pychess.Utils.const import *
 
-_ = lambda x:x
-
 from managers.GameListManager import GameListManager
 from managers.FingerManager import FingerManager
 from managers.NewsManager import NewsManager
@@ -202,23 +200,25 @@ class FICSConnection (Connection):
     
     def run (self):
         try:
-            if not self.isConnected():
-                self._connect()
-            while self.isConnected():
-                self.client.handleSomeText(self.predictions)
+            try:
+                if not self.isConnected():
+                    self._connect()
+                while self.isConnected():
+                    self.client.handleSomeText(self.predictions)
+            
+            except Exception, e:
+                if self.connected:
+                    self.connected = False
+                for errortype in (IOError, LogOnError, EOFError,
+                                  socket.error, socket.gaierror, socket.herror):
+                    if isinstance(e, errortype):
+                        self.emit("error", e)
+                        break
+                else:
+                    raise
         
-        except Exception, e:
-            if self.connected:
-                self.connected = False
-            for errortype in (IOError, LogOnError, EOFError,
-                              socket.error, socket.gaierror, socket.herror):
-                if isinstance(e, errortype):
-                    self.emit("error", e)
-                    break
-            else:
-                raise
-        
-        self.emit("disconnected")
+        finally:
+            self.emit("disconnected")
     
     def disconnect (self):
         self.emit("disconnecting")

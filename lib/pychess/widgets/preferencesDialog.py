@@ -44,7 +44,7 @@ class GeneralTab:
         # Give to uistuff.keeper
         
         for key in ("firstName", "secondName",
-                    "hideTabs", "autoRotate", "showCords", "figuresInNotation", 
+                    "hideTabs", "autoRotate", "faceToFace", "showCords", "figuresInNotation", 
                     "fullAnimation", "moveAnimation", "noAnimation"):
             uistuff.keep(widgets[key], key)
 
@@ -177,6 +177,18 @@ class EngineTab:
                     combobox.set_active(index)
             
             uistuff.keep (widgets[combo], combo, get_value, set_value)
+        
+        # Init info box
+        
+        uistuff.makeYellow(widgets["analyzer_pref_infobox"])
+        widgets["analyzer_pref_infobox"].hide()
+        def updatePrefInfobox (widget, *args):
+            widgets["analyzer_pref_infobox"].show()
+        widgets["ana_combobox"].connect("changed", updatePrefInfobox)
+        widgets["analyzer_check"].connect("toggled", updatePrefInfobox)
+        widgets["inv_ana_combobox"].connect("changed", updatePrefInfobox)
+        widgets["inv_analyzer_check"].connect("toggled", updatePrefInfobox)
+        widgets["preferences"].connect("hide", lambda *a: widgets["analyzer_pref_infobox"].hide())
         
 ################################################################################
 # Sound initing                                                                #

@@ -1,5 +1,7 @@
 
-import gettext, locale
+import gettext
+import locale
+from time import sleep
 from cStringIO import StringIO
 from operator import attrgetter
 from itertools import groupby
@@ -75,11 +77,9 @@ smallPlayerItems = []
 def createPlayerUIGlobals (discoverer):
     global playerItems
     global smallPlayerItems
-    
     for variantClass in variants.values():
         playerItems += [ [(ipeople, _("Human Being"))] ]
         smallPlayerItems += [ [(speople, _("Human Being"))] ]
-
     for engine in discoverer.getEngines().values():
         name = discoverer.getName(engine)
         c = discoverer.getCountry(engine)
@@ -110,7 +110,6 @@ class _GameInitializationMode:
     @classmethod
     def _init (cls):
         cls.widgets = uistuff.GladeWidgets ("newInOut.glade")
-        
         
         uistuff.createCombo(cls.widgets["whitePlayerCombobox"],
                             (i[:2] for i in playerItems[0]))
@@ -496,3 +495,34 @@ class ImageButton(gtk.DrawingArea):
             self.current = (self.current + 1) % len(self.surfaces)
             self.window.invalidate_rect(self.size, True)
             self.window.process_updates(True)
+
+def createRematch (gamemodel):
+    if gamemodel.timemodel:
+        secs = gamemodel.timemodel.intervals[0][WHITE]
+        gain = gamemodel.timemodel.gain
+        newgamemodel = GameModel(TimeModel(secs, gain), gamemodel.variant)
+    else:
+        newgamemodel = GameModel(variant=gamemodel.variant)
+    
+    wp = gamemodel.players[WHITE]
+    bp = gamemodel.players[BLACK]
+    
+    if wp.__type__ == LOCAL:
+        player1tup = (wp.__type__, wp.__class__, (BLACK, ""), repr(wp))
+        if bp.__type__ == LOCAL:
+            player0tup = (bp.__type__, bp.__class__, (WHITE, ""), repr(bp))
+        else:
+            binname = bp.engine.path.split("/")[-1]
+            xmlengine = discoverer.getEngines()[binname]
+            player0tup = (ARTIFICIAL, discoverer.initPlayerEngine,
+                          (xmlengine, WHITE, bp.strength, gamemodel.variant,
+                           secs, gain), repr(bp))
+    else:
+        player0tup = (bp.__type__, bp.__class__, (WHITE, ""), repr(bp))
+        binname = wp.engine.path.split("/")[-1]
+        xmlengine = discoverer.getEngines()[binname]
+        player1tup = (ARTIFICIAL, discoverer.initPlayerEngine,
+                      (xmlengine, BLACK, wp.strength, gamemodel.variant,
+                       secs, gain), repr(wp))
+    
+    ionest.generalStart(newgamemodel, player0tup, player1tup)

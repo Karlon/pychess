@@ -10,6 +10,7 @@ from pychess.Utils.const import *
 from Log import log
 from pychess.System.ThreadPool import pool
 from pychess.System import glock
+from pychess.System.GtkWorker import EmitPublisher
 
 class SubProcessError (Exception): pass
 class TimeOutError (Exception): pass
@@ -25,12 +26,10 @@ def searchPath (file, pathvar="PATH", access=os.R_OK):
                 return path
     return None
 
-hasPrivateLooper = False
-
 class SubProcess (gobject.GObject):
     
     __gsignals__ = {
-        "line": (gobject.SIGNAL_RUN_FIRST, None, (str,)),
+        "line": (gobject.SIGNAL_RUN_FIRST, None, (object,)),
         "died": (gobject.SIGNAL_RUN_FIRST, None, ())
     }
     
@@ -42,6 +41,9 @@ class SubProcess (gobject.GObject):
         self.warnwords = warnwords
         self.env = env or os.environ
         self.buffer = ""
+        
+        self.linePublisher = EmitPublisher(self, "line", EmitPublisher.SEND_LIST)
+        self.linePublisher.start()
         
         self.defname = os.path.split(path)[1]
         self.defname = self.defname[:1].upper() + self.defname[1:].lower()
@@ -56,6 +58,7 @@ class SubProcess (gobject.GObject):
                 standard_input=True, standard_output=True, standard_error=True,
                 flags=gobject.SPAWN_DO_NOT_REAP_CHILD|gobject.SPAWN_SEARCH_PATH)
         
+        self.__channelTags = []
         self.inChannel = self._initChannel(stdin, None, None, False)
         readFlags = gobject.IO_IN|gobject.IO_PRI|gobject.IO_ERR
         self.outChannel = self._initChannel(stdout, readFlags, self.__io_cb, False)
@@ -67,16 +70,28 @@ class SubProcess (gobject.GObject):
         channel = gobject.IOChannel(filedesc)
         channel.set_flags(channel.get_flags() | gobject.IO_FLAG_NONBLOCK)
         if callback:
-            channel.add_watch(callbackflag, callback, isstderr)
+            tag = channel.add_watch(callbackflag, callback, isstderr)
+            self.__channelTags.append(tag)
         return channel
+    
+    def _closeChannels (self):
+        for tag in self.__channelTags:
+            gobject.source_remove(tag)
+        for channel in (self.inChannel, self.outChannel, self.errChannel):
+            try:
+                channel.close()
+            except gobject.GError, error:
+                pass
     
     def __setup (self):
         os.nice(15)
     
     def __child_watch_callback (self, pid, code):
-        if code not in (0,11): # Success and 'Resource temporarily unavailable'
+        # Kill the engine on any signal but 'Resource temporarily unavailable'
+        if code != errno.EWOULDBLOCK:
             log.error(os.strerror(code)+"\n", self.defname)
             self.emit("died")
+            self.gentleKill()
     
     def __io_cb (self, channel, condition, isstderr):
         
@@ -94,7 +109,7 @@ class SubProcess (gobject.GObject):
                         break
                 else: log.debug(line, self.defname)
             
-            self.emit("line", line)
+            self.linePublisher.put(line)
     
     def write (self, data):
         log.log(data, self.defname)
@@ -106,38 +121,27 @@ class SubProcess (gobject.GObject):
                 log.error(str(e)+". Last line wasn't sent.\n", self.defname)
     
     def wait4exit (self, timeout=None):
-        """ Wait timeout seconds for process to die. Returns true if process
-            is dead (and was reaped), false if alive. """
+        if timeout != None:
+            signal.alarm(timeout)
         
         try:
-            if timeout:
-                # Try a few times to reap the process with waitpid:
-                totalwait = timeout
-                deltawait = timeout/1000.0
-                if deltawait < 0.01 and totalwait > 0.01:
-                    deltawait = 0.01
-                while totalwait > 0:
-                    pid, code = os.waitpid(self.pid, os.WNOHANG)
-                    if pid:
-                        code = (code, os.strerror(code))
-                        log.debug("Exitcode %d %s\n" % code, self.defname)
-                        return code
-                    time.sleep(deltawait)
-                    totalwait -= deltawait
-            else:
-                # If no timeout, we don't add os.WNOHANG, to block until data
-                pid, code = os.waitpid(self.pid, 0)
-                code = (code, os.strerror(code))
-                log.debug("Exitcode %d %s\n" % code, self.defname)
-                return code
-        
+            pid, code = os.waitpid(self.pid, 0)
         except OSError, error:
             if error.errno == errno.ECHILD:
-                log.debug("waitpid raised 'No child processes'\n", self.defname)
-                return (0, os.strerror(0))
-            else: raise OSError, error
+                pid, code = self.pid, error.errno
+            else:
+                raise
         
-        return (None, None)
+        # Cancel the alarm
+        signal.alarm(0)
+        
+        # Test if we were interrupted by alarm
+        if code == errno.EINTR:
+            return None, None
+        
+        code = (code, os.strerror(code))
+        log.debug("Exitcode %d %s\n" % code, self.defname)
+        return code
     
     def sendSignal (self, sign):
         try:
@@ -149,7 +153,12 @@ class SubProcess (gobject.GObject):
                 pass
             else: raise OSError, error
     
-    def gentleKill (self, first=1.0, second=0.5):
+    def gentleKill (self, first=1, second=1):
+        pool.start(self.__gentleKill_inner, first, second)
+    
+    def __gentleKill_inner (self, first, second):
+        self.resume()
+        self._closeChannels()
         code, string = self.wait4exit(timeout=first)
         if code == None:
             self.sigterm()
@@ -177,7 +186,7 @@ class SubProcess (gobject.GObject):
 
 if __name__ == "__main__":
     loop = gobject.MainLoop()
-    paths = ("igang.dk", "google.com", "google.dk", "ahle.dk", "myspace.com", "yahoo.com")
+    paths = ("igang.dk", "google.com", "google.dk", "myspace.com", "yahoo.com")
     maxlen = max(len(p) for p in paths)
     def callback (subp, line, path):
         print "\t", path.ljust(maxlen), line.rstrip("\n")

@@ -432,8 +432,9 @@ class GameModel (GObject, PooledThread):
         if not self.status in (WAITING_TO_START, PAUSED, RUNNING):
             self.needsSave = True
         
-        log.debug("Ending a game with status %d for reason %d\n%s" % (status, reason,
-            "".join(traceback.format_list(traceback.extract_stack())).strip()))
+        #log.debug("Ending a game with status %d for reason %d\n%s" % (status, reason,
+        #    "".join(traceback.format_list(traceback.extract_stack())).strip()))
+        log.debug("Ending a game with status %d for reason %d\n" % (status, reason))
         self.status = status
         self.reason = reason
         
@@ -463,7 +464,6 @@ class GameModel (GObject, PooledThread):
         
         if self.status != KILLED:
             #self.resume()
-            print "term"
             for player in self.players:
                 player.end(self.status, self.reason)
             

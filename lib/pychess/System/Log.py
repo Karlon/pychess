@@ -16,7 +16,11 @@ class LogPipe:
         try:
             self.to.write(data)
         except IOError:
-            log.error("Could not write data '%s' to pipe '%s'" % (data, repr(self.to)))
+            if flag == "stdout":
+                # Certainly hope we never ends up here
+                pass
+            else:
+                log.error("Could not write data '%s' to pipe '%s'" % (data, repr(self.to)))
         if log:
             log.debug (data, self.flag)
         #self.flush()
@@ -61,10 +65,9 @@ class Log (gobject.GObject):
             self.messages.append((task, time.time(), message, type))
         self.publisher.put((task, time.time(), message, type))
         
-        
         if self.printTime:
             message = self._format(task, message, type)
-        self.printTime = message[-1] == ("\n")
+        self.printTime = message.endswith("\n")
         
         try:
             self.file.write(message)
