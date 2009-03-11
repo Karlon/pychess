@@ -165,8 +165,8 @@ class GameWidget (gobject.GObject):
             boardvbox.pack_start(ccalign, expand=False)
         
         actionMenuDic = {}
-        for item in ACTION_MENU_ITEMS:
-            actionMenuDic[item] = widgets[item]
+        #for item in ACTION_MENU_ITEMS:
+        #    actionMenuDic[item] = widgets[item]
         
         board = BoardControl(gamemodel, actionMenuDic)
         boardvbox.pack_start(board)

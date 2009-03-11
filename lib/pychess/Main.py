@@ -20,9 +20,7 @@ from pychess.widgets import gamewidget
 from pychess.widgets import gamenanny
 from pychess.widgets import ionest
 from pychess.widgets import preferencesDialog, gameinfoDialog, playerinfoDialog
-from pychess.widgets.TaskerManager import TaskerManager
-from pychess.widgets.TaskerManager import NewGameTasker
-from pychess.widgets.TaskerManager import InternetGameTasker
+
 from pychess.Players.engineNest import discoverer
 from pychess.ic import ICLogon
 
@@ -32,146 +30,272 @@ from pychess.ic import ICLogon
 gameDic = {}
 chessFiles = {}
 
-class GladeHandlers:
-    
-    def on_gmwidg_created (handler, gmwidg, gamemodel):
-        gameDic[gmwidg] = gamemodel
-        
-        # Bring playing window to the front
-        gamewidget.getWidgets()["window1"].present()
-        
-        # Make sure game dependent menu entries are sensitive
-        for widget in gamewidget.MENU_ITEMS:
-            gamewidget.getWidgets()[widget].set_property('sensitive', True)
-        
-        # Make sure we can remove gamewidgets from gameDic later
-        gmwidg.connect("closed", GladeHandlers.__dict__["on_gmwidg_closed"])
-    
-    def on_gmwidg_closed (gmwidg):
-        del gameDic[gmwidg]
-        if not gameDic:
-            for widget in gamewidget.MENU_ITEMS:
-                gamewidget.getWidgets()[widget].set_property('sensitive', False)
-    
-    #          Drag 'n' Drop          #
-    
-    def on_drag_received (wi, context, x, y, selection, target_type, timestamp):
-        uri = selection.data.strip()
-        uris = uri.split()
-        if len(uris) > 1:
-            log.warn("%d files were dropped. Only loading the first" % len(uris))
-        uri = uris[0]
-        newGameDialog.LoadFileExtension.run(uri)
-    
-    #          Game Menu          #
-    
-    def on_new_game1_activate (widget):
-        newGameDialog.NewGameMode.run()
-    
-    def on_play_internet_chess_activate (widget):
-        ICLogon.run()
-    
-    def on_load_game1_activate (widget):
-        newGameDialog.LoadFileExtension.run(None, chessFiles)
-    
-    def on_set_up_position_activate (widget):
-        # Not implemented
-        pass
-    
-    def on_enter_game_notation_activate (widget):
-        newGameDialog.EnterNotationExtension.run()
-    
-    def on_save_game1_activate (widget):
-        ionest.saveGame (gameDic[gamewidget.cur_gmwidg()])
-    
-    def on_save_game_as1_activate (widget):
-        ionest.saveGameAs (gameDic[gamewidget.cur_gmwidg()])
-    
-    def on_properties1_activate (widget):
-        gameinfoDialog.run(gamewidget.getWidgets(), gameDic)
-    
-    def on_player_rating1_activate (widget):
-        playerinfoDialog.run(gamewidget.getWidgets())
-    
-    def on_close1_activate (widget):
-        gmwidg = gamewidget.cur_gmwidg()
-        response = ionest.closeGame(gmwidg, gameDic[gmwidg])
-    
-    def on_quit1_activate (widget, *args):
-        if ionest.closeAllGames(gameDic.items()) in (gtk.RESPONSE_OK, gtk.RESPONSE_YES):
-            gtk.main_quit()
-        else: return True
-    
-    #          View Menu          #
-    
-    def on_rotate_board1_activate (widget):
-        gmwidg = gamewidget.cur_gmwidg()
-        if gmwidg.board.view.rotation:
-            gmwidg.board.view.rotation = 0
-        else:
-            gmwidg.board.view.rotation = math.pi
-
-    
-    def on_fullscreen1_activate (widget):
-        gamewidget.getWidgets()["window1"].fullscreen()
-        gamewidget.getWidgets()["fullscreen1"].hide()
-        gamewidget.getWidgets()["leave_fullscreen1"].show()
-    
-    def on_leave_fullscreen1_activate (widget):
-        gamewidget.getWidgets()["window1"].unfullscreen()
-        gamewidget.getWidgets()["leave_fullscreen1"].hide()
-        gamewidget.getWidgets()["fullscreen1"].show()
-    
-    def on_about1_activate (widget):
-        gamewidget.getWidgets()["aboutdialog1"].show()
-    
-    def on_log_viewer1_activate (widget):
-        if widget.get_active():
-            LogDialog.show()
-        else: LogDialog.hide()
-    
-    def on_show_sidepanels_activate (widget):
-        gamewidget.zoomToBoard(not widget.get_active())
-    
-    def on_hint_mode_activate (widget):
-        for gmwidg in gameDic.keys():
-            gamenanny.setAnalyzerEnabled(gmwidg, HINT, widget.get_active())
-    
-    def on_spy_mode_activate (widget):
-        for gmwidg in gameDic.keys():
-            print "setting spymode for", gmwidg, "to", widget.get_active()
-            gamenanny.setAnalyzerEnabled(gmwidg, SPY, widget.get_active())
-    
-    #          Settings menu          #
-    
-    def on_preferences_activate (widget):
-        preferencesDialog.run(gamewidget.getWidgets())
-    
-    #          Help menu          #
-    
-    def on_about_chess1_activate (widget):
-        webbrowser.open(_("http://en.wikipedia.org/wiki/Chess"))
-    
-    def on_how_to_play1_activate (widget):
-        webbrowser.open(_("http://en.wikipedia.org/wiki/Rules_of_chess"))
-
-    def translate_this_application_activate(widget):
-        webbrowser.open("http://code.google.com/p/pychess/wiki/RosettaTranslates")
-        
-    def on_TipOfTheDayMenuItem_activate (widget):
-        tipOfTheDay.TipOfTheDay.show()
-    
-    #          Other          #
-    
-    def on_notebook2_switch_page (widget, page, page_num):
-        gamewidget.getWidgets()["notebook3"].set_current_page(page_num)
-    
-
-
 dnd_list = [ ('application/x-chess-pgn', 0, 0xbadbeef),
-             ('application/da-chess-pgn', 0, 0xbadbeef),
+             ('application/da-chess-pgn', 0, 0x7cf*0x17ee1),
              ('text/plain', 0, 0xbadbeef) ]
 
+minimumMenu = """
+    <ui>
+        <menubar name='Menubar'>
+            <menu action='FileMenu'>
+                <menuitem action='New'/>
+                <menuitem action='Open'/>
+                <separator/>
+                <menuitem action='Close'/>
+                <menuitem action='Quit'/>
+            </menu>
+            <menu action='HelpMenu'>
+                <menuitem action='About'/>
+            </menu>
+        </menubar>
+    </ui>
+"""
+
+from pychess.perspectives.CurrentGamesPerspective import *
+from pychess.perspectives.UsersAndEnginesPerspective import *
+from pychess.widgets.Background import giveBackground
+
+class Main (gtk.Window):
+    def __init__(self):
+        gtk.Window.__init__(self)
+        
+        self.__perspectives = []
+        
+        self.__createMinimumUI()
+        
+        mainVBox = gtk.VBox()
+        mainHBox = gtk.HBox()
+        rightVBox = gtk.VBox()
+        self.__toolbar = gtk.Toolbar()
+        self.__perspectivesNotebook = gtk.Notebook()
+        self.__perspectivesNotebook.props.show_tabs = False
+        self.__perspectivesNotebook.props.show_border = False
+        self.__perspectiveVBox = gtk.VBox()
+        self.__perspectiveVBox.set_size_request(300, -1)
+        self.__perspectiveVBox.props.border_width = 2
+        self.__perspectiveVBox.props.spacing = 2
+        
+        #giveBackground(self.__perspectiveVBox)
+        #import gobject
+        #gobject.idle_add(lambda: giveBackground(mainVBox))
+        
+        mainVBox.pack_start(self.__ui.get_widget("/Menubar"), False, True)
+        mainVBox.pack_start(mainHBox, True, True)
+        mainHBox.pack_start(self.__perspectiveVBox, False, True)
+        mainHBox.pack_start(rightVBox, True, True)
+        rightVBox.pack_start(self.__toolbar, False, True)
+        rightVBox.pack_start(self.__perspectivesNotebook, True, True)
+        
+        self.add(mainVBox)
+    
+    def addPerspective (self, perspective):
+        assert perspective.getIconImage().get_storage_type() not in \
+            (gtk.IMAGE_PIXMAP, gtk.IMAGE_IMAGE, gtk.IMAGE_ANIMATION)
+        
+        button = gtk.ToggleButton()
+        button.props.active = False
+        hbox = gtk.HBox()
+        image = perspective.getIconImage()
+        image.set_padding(8, 0)
+        hbox.pack_start(image, False, True)
+        label = gtk.Label()
+        label.props.xalign = 0
+        label.set_markup("<big>%s</big>" % perspective.getName())
+        hbox.pack_start(label, True, True)
+        #hbox.pack_start(perspective.getPendingLabel())
+        button.add(hbox)
+        button.show_all()
+        
+        sw = gtk.ScrolledWindow()
+        sw.props.shadow_type = gtk.SHADOW_IN
+        sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        sw.add(perspective.getBrowseTree())
+        sw.hide()
+        
+        self.__perspectiveVBox.pack_start(button, False, True)
+        self.__perspectiveVBox.pack_start(sw, True, True)
+        self.__perspectivesNotebook.append_page(perspective.getWindow())
+        self.__perspectivesNotebook.show_all()
+        for toolbutton in perspective.getToolbuttons():
+            self.__toolbar.add(toolbutton)
+            toolbutton.show()
+        
+        # Convert from gtk.Image to stockicon
+        iconname = None
+        if image.get_storage_type() != gtk.IMAGE_EMPTY:
+            if image.get_storage_type() == gtk.IMAGE_STOCK:
+                iconname, iconsize = perspective.getIconImage().get_stock()
+            else:
+                iconname = perspective.getName()
+                if image.get_storage_type() == gtk.IMAGE_PIXBUF:
+                    pixbuf = image.get_pixbuf()
+                elif image.get_storage_type() == gtk.IMAGE_ICON_SET:
+                    pixbuf = image.get_icon_set().render_icon(style, direction, state, size, widget, detail)
+                iconsource = gtk.IconSource()
+                iconsource.set_pixbuf(pixbuf)
+                iconset = gtk.IconSet()
+                iconset.add_source(iconsource)
+                iconfactory = gtk.IconFactory()
+                iconfactory.add(iconname, iconset)
+                iconfactory.add_default() 
+        
+        # Add item to Perspective menu
+        ag = gtk.ActionGroup('PerspectiveActions')
+        action = gtk.Action(perspective.getName(), perspective.getName(),
+                            perspective.getDescription(), iconname)
+        action.connect("activate", lambda a, p: self.showPerspective(p), perspective)
+        ag.add_action_with_accel(action, '<control>%d' % (len(self.__perspectives)+1))
+        ag.add_action(gtk.Action('Perspectives', '_Perspectives', None, None))
+        self.__ui.insert_action_group(ag, 0)
+        uistring = "<ui><menubar name='Menubar'><menu action='Perspectives'>" +\
+                   "<menuitem action='%s'/></menu></menubar></ui>" % perspective.getName()
+        self.__ui.add_ui_from_string(uistring)
+        
+        # ...
+        self.__perspectives.append((perspective, button))
+        button.connect("clicked", self.__onPerspectiveButtonClicked)
+    
+    def removePerspective (self, perspective):
+        """ This is used only if hiding/showing of perspectives are implemented """
+        perspective.hide()
+        button = [b for p, b in self.__perspectives if p == perspective][0]
+        self.__perspectiveVBox.remove(button)
+        self.__perspectiveVBox.remove(perspective.getBrowseTree())
+        for ag in get_action_groups():
+            if ag.get_name() == 'PerspectiveActions':
+                pass
+                #TODO: Update accels
+    
+    def showPerspective (self, perspective):
+        for num, (iperspective, button) in enumerate(self.__perspectives):
+            button.handler_block_by_func(self.__onPerspectiveButtonClicked)
+            if iperspective is perspective:
+                button.props.active = True
+                iperspective.show()
+                iperspective.getBrowseTree().get_parent().show_all()
+                self.__perspectivesNotebook.set_current_page(num)
+            else:
+                button.props.active = False
+                iperspective.hide()
+                iperspective.getBrowseTree().get_parent().hide()
+            button.handler_unblock_by_func(self.__onPerspectiveButtonClicked)
+    
+    def getPerspectives (self):
+        return (perspective for (perspective, button) in self.__perspectives)
+    
+    def __onPerspectiveButtonClicked (self, sourceButton):
+        for perspective, button in self.__perspectives:
+            if button == sourceButton:
+                self.showPerspective(perspective)
+                break
+    
+    def __createMinimumUI (self):
+        ag = gtk.ActionGroup('WindowActions')
+        ag.add_actions([
+            ('FileMenu', None, '_File'),
+                ('New', gtk.STOCK_NEW, '_New', '<control>N',
+                 'Create a new file', lambda *a: None),
+                ('Open', gtk.STOCK_OPEN, '_Open', '<control>O',
+                 'Open a file', lambda *a: None),
+                ('Close', gtk.STOCK_CLOSE, '_Close', '<control>W',
+                 'Close the current window', lambda *a: None),
+                ('Quit', gtk.STOCK_QUIT, '_Quit', '<control>Q',
+                 'Quit application', lambda *a: None),
+            ('HelpMenu', None, '_Help'),
+                ('About',    None, '_About', None,
+                 'About application', lambda *a: None),
+            ])
+        self.__ui = gtk.UIManager()
+        self.__ui.insert_action_group(ag, 0)
+        self.__ui.add_ui_from_string(minimumMenu)
+        self.add_accel_group(self.__ui.get_accel_group())
+    
+    def bringItOn (self):
+        self.show_all()
+        self.showPerspective(self.getPerspectives().next())
+
+def run (args):
+    
+    main = Main()
+    uistuff.keepWindowSize("main", main, (575,479), POSITION_GOLDEN)
+    main.addPerspective(CurrentGamesPerspective())
+    main.addPerspective(UsersAndEnginesPerspective())
+    main.connect("delete-event", gtk.main_quit)
+    
+    def discovering_started (discoverer, binnames):
+        DiscovererDialog.show(discoverer, binnames, parent=main)
+    glock.glock_connect(discoverer, "discovering_started", discovering_started)
+    gobject.idle_add(discoverer.start)
+    
+    plugins = PluginEngine()
+    plugins.registerPlugins(main)
+    
+    main.bringItOn()
+    gtk.gdk.threads_init()
+    gtk.main()
+
+
+
+from pychess.System import prefix
+import os.path
+import imp
+from Plugin import Plugin
+
+class PluginEngine (gobject.GObject):
+    
+    __gsignals__ = {
+        "plugin_added":  (gobject.SIGNAL_RUN_FIRST, None, (object, object)),
+        "plugin_removed":  (gobject.SIGNAL_RUN_FIRST, None, ()),
+        "plugin_toggled": (gobject.SIGNAL_RUN_FIRST, None, ()),
+    }
+    
+    def __init__ (self):
+        gobject.GObject.__init__(self)
+        self.__plugins = []
+    
+    def registerPlugins (self, main):
+        plugins = []
+        for root in (prefix.getDataPrefix(), prefix.getHomePrefix()):
+            if "plugins" in os.listdir(root):
+                path = os.path.join(root, "plugins")
+                if os.path.isdir(path):
+                    for file in os.listdir(path):
+                        if file.endswith(".pychess-plugin"):
+                            infofile = os.path.join(path, file)
+                            module = imp.find_module(file[:-15], [path])
+                            # Validation could go here
+                            plugins.append((infofile, module))
+        
+        oldsubclasses = set()
+        for infofile, module in plugins:
+            imp.load_module("__init__.py", *module)
+            subclasses = set(Plugin.__subclasses__())
+            pluginclass, = subclasses.difference(oldsubclasses)
+            oldsubclasses = subclasses
+            
+            plugin = pluginclass()
+            plugin.activate(main)
+            dic = self.__parseInfofile(open(infofile))
+            self.emit("plugin_added", plugin, dic)
+    
+    def __parseInfofile (self, file):
+        dic = {"iage": 1,
+               "name": "No Name",
+               "description": "No Description",
+               "authors": "",
+               "copyright": "",
+               "website": ""}
+        
+        for line in file:
+            line = line.strip()
+            if "=" not in line: continue
+            key, value = line.split("=", 1)
+            dic[key.lower()] = value
+        
+        return dic
+    
+    def installPlugin (self, path):
+        pass
 
 class PyChess:
     def __init__(self, args):
@@ -249,7 +373,7 @@ class PyChess:
                 newGameDialog.LoadFileExtension.run(args[0], chessFiles)
             glock.glock_connect_after(discoverer, "all_engines_discovered", do)
 
-def run (args):
+def run2 (args):
     import gtkexcepthook
     PyChess(args)
     signal.signal(signal.SIGINT, gtk.main_quit)

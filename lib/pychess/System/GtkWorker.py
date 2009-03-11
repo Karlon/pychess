@@ -74,7 +74,7 @@ class GtkWorker (GObject, Thread):
         "done":       (SIGNAL_RUN_FIRST, None, (object,))
     }
     
-    def __init__ (self, func):
+    def __init__ (self, func, *args, **kwargs):
         """ Initialize a new GtkWorker around a specific function """
         GObject.__init__(self)
         Thread.__init__(self)
@@ -85,6 +85,9 @@ class GtkWorker (GObject, Thread):
         self.handler_ids = {}
         
         self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        
         self.cancelled = False
         self.done = False
         self.progress = 0
@@ -167,7 +170,7 @@ class GtkWorker (GObject, Thread):
             self.start()
     
     def run (self):
-        self.result = self.func(self)
+        self.result = self.func(self, *self.args, **self.kwargs)
         self.done = True
         if self.connections["done"] >= 1:
             glock.acquire()

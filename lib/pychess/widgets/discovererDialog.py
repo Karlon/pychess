@@ -15,7 +15,7 @@ uistuff.cacheGladefile("discovererDialog.glade")
 class DiscovererDialog:
     
     @classmethod
-    def show (cls, discoverer, binnames, mainwindow):
+    def show (cls, discoverer, binnames, parent):
         assert not hasattr(cls, "widgets"), "Show can only be called once"
         cls.widgets = uistuff.GladeWidgets("discovererDialog.glade")
         
@@ -53,7 +53,7 @@ class DiscovererDialog:
         #=======================================================================
         cls.widgets["discovererDialog"].set_position(gtk.WIN_POS_CENTER_ON_PARENT)
         cls.widgets["discovererDialog"].set_modal(True)
-        cls.widgets["discovererDialog"].set_transient_for(mainwindow)
+        cls.widgets["discovererDialog"].set_transient_for(parent)
         cls.widgets["discovererDialog"].show_all()
     
     

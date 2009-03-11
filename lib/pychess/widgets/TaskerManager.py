@@ -82,9 +82,9 @@ class TaskerManager (gtk.Table):
         
         self.widgets = widgets
         
-        for widget in widgets:
-            widget.connect("size-allocate", lambda *a:
-                           self.window.invalidate_rect(self.get_allocation(), False))
+        #for widget in widgets:
+        #    widget.connect("size-allocate", lambda *a:
+        #                   self.window.invalidate_rect(self.get_allocation(), False))
         
         root = math.sqrt(len(widgets))
         # Calculate number of rows

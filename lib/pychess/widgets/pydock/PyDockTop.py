@@ -112,6 +112,7 @@ class PyDockTop (TopDock):
         
         if self.child:
             self.__addToXML(self.child, dockElem, doc)
+        
         f = file(xmlpath, "w")
         doc.writexml(f)
         f.close()
@@ -132,7 +133,7 @@ class PyDockTop (TopDock):
         
         elif isinstance(component, DockLeaf):
             childElement = document.createElement("leaf")
-            childElement.setAttribute("current", component.getCurrentPanel())
+            childElement.setAttribute("current", component.getCurrentPanel() or "0")
             childElement.setAttribute("dockable", str(component.isDockable()))
             for panel, title, id in component.getPanels():
                 e = document.createElement("panel")

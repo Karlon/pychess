@@ -68,15 +68,15 @@ class Human (Player):
         Player.__init__(self)
         
         self.defname = "Human"
-        self.board = gmwidg.board
+        #self.board = gmwidg.board
         self.gmwidg = gmwidg
-        self.gamemodel = self.board.view.model
+        #self.gamemodel = self.board.view.model
         self.queue = Queue()
         self.color = color
-        self.conid = [
-            self.board.connect("piece_moved", self.piece_moved),
-            self.board.connect("action", lambda b,ac,pa: self.emit_action(ac,pa))
-        ]
+        #self.conid = [
+        #    self.board.connect("piece_moved", self.piece_moved),
+        #    self.board.connect("action", lambda b,ac,pa: self.emit_action(ac,pa))
+        #]
         self.setName(name)
     
     #===========================================================================
@@ -109,9 +109,9 @@ class Human (Player):
     #===========================================================================
     
     def makeMove (self, board1, move, board2):
-        self.gmwidg.setLocked(False)
+        #self.gmwidg.setLocked(False)
         item = self.queue.get(block=True)
-        self.gmwidg.setLocked(True)
+        #self.gmwidg.setLocked(True)
         if item == "del":
             raise PlayerIsDead, "Killed by forgin forces"
         if item == "int":

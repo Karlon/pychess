@@ -13,6 +13,8 @@ from pychess.Utils.logic import validate
 from BoardView import BoardView, rect
 from BoardView import join
 
+# TODO: Add support for at vise et sideboard ved crazy-/bughouse
+
 class BoardControl (gtk.EventBox):
     
     __gsignals__ = {
