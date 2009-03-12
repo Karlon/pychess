@@ -12,7 +12,7 @@
   
   
   <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
-<path>/pychess/lib</path>
+<path>/PyChess Refactor/lib</path>
 </pydev_pathproperty>
   
   

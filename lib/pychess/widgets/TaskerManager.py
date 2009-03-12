@@ -28,7 +28,7 @@ class TaskerManager (gtk.Table):
     def __init__ (self):
         gtk.Table.__init__(self)
         self.border = 20
-        giveBackground(self)
+        #giveBackground(self)
         self.connect("expose_event", self.expose)
         #self.set_homogeneous(True)
     

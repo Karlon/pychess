@@ -96,7 +96,7 @@ class CurrentGamesPerspective (Perspective):
             self.getWindow().remove(self.__dock)
             self.getWindow().add(self.__tasker)
     
-    def getToolbuttons(self):
+    def createToolbuttons(self):
         newgame = gtk.ToolButton(label="New Game")
         newgame.connect("clicked", self.__newGameClicked)
         return [newgame]

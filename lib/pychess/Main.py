@@ -59,7 +59,7 @@ class Main (gtk.Window):
     def __init__(self):
         gtk.Window.__init__(self)
         
-        self.__perspectives = []
+        self.__perspectives = {}
         
         self.__createMinimumUI()
         
@@ -75,9 +75,7 @@ class Main (gtk.Window):
         self.__perspectiveVBox.props.border_width = 2
         self.__perspectiveVBox.props.spacing = 2
         
-        #giveBackground(self.__perspectiveVBox)
-        #import gobject
-        #gobject.idle_add(lambda: giveBackground(mainVBox))
+        mainVBox.connect("style-set", lambda mainVBox, e: giveBackground(mainVBox))
         
         mainVBox.pack_start(self.__ui.get_widget("/Menubar"), False, True)
         mainVBox.pack_start(mainHBox, True, True)
@@ -87,6 +85,7 @@ class Main (gtk.Window):
         rightVBox.pack_start(self.__perspectivesNotebook, True, True)
         
         self.add(mainVBox)
+        mainVBox.show_all()
     
     def addPerspective (self, perspective):
         assert perspective.getIconImage().get_storage_type() not in \
@@ -116,9 +115,6 @@ class Main (gtk.Window):
         self.__perspectiveVBox.pack_start(sw, True, True)
         self.__perspectivesNotebook.append_page(perspective.getWindow())
         self.__perspectivesNotebook.show_all()
-        for toolbutton in perspective.getToolbuttons():
-            self.__toolbar.add(toolbutton)
-            toolbutton.show()
         
         # Convert from gtk.Image to stockicon
         iconname = None
@@ -152,7 +148,7 @@ class Main (gtk.Window):
         self.__ui.add_ui_from_string(uistring)
         
         # ...
-        self.__perspectives.append((perspective, button))
+        self.__perspectives[perspective] = (button, perspective.createToolbuttons())
         button.connect("clicked", self.__onPerspectiveButtonClicked)
     
     def removePerspective (self, perspective):
@@ -167,24 +163,46 @@ class Main (gtk.Window):
                 #TODO: Update accels
     
     def showPerspective (self, perspective):
-        for num, (iperspective, button) in enumerate(self.__perspectives):
-            button.handler_block_by_func(self.__onPerspectiveButtonClicked)
+        for iperspective in self.getPerspectives():
             if iperspective is perspective:
-                button.props.active = True
-                iperspective.show()
-                iperspective.getBrowseTree().get_parent().show_all()
-                self.__perspectivesNotebook.set_current_page(num)
-            else:
-                button.props.active = False
-                iperspective.hide()
-                iperspective.getBrowseTree().get_parent().hide()
-            button.handler_unblock_by_func(self.__onPerspectiveButtonClicked)
+                self.__showPerspective(iperspective)
+            else: self.__hidePerspective(iperspective)
+    
+    def __showPerspective (self, perspective):
+        button, toolbuttons = self.__perspectives[perspective]
+        button.handler_block_by_func(self.__onPerspectiveButtonClicked)
+        button.props.active = True
+        button.handler_unblock_by_func(self.__onPerspectiveButtonClicked)
+        
+        if toolbuttons:
+            for toolbutton in toolbuttons:
+                self.__toolbar.add(toolbutton)
+            self.__toolbar.show_all()
+        else: self.__toolbar.hide()
+        
+        perspective.show()
+        perspective.getBrowseTree().get_parent().show_all()
+        page_num = self.__perspectivesNotebook.page_num(perspective.getWindow())
+        self.__perspectivesNotebook.set_current_page(page_num)
+    
+    def __hidePerspective (self, perspective):
+        button, toolbuttons = self.__perspectives[perspective]
+        button.handler_block_by_func(self.__onPerspectiveButtonClicked)
+        button.props.active = False
+        button.handler_unblock_by_func(self.__onPerspectiveButtonClicked)
+        
+        for toolbutton in toolbuttons:
+            if toolbutton.get_parent() is self.__toolbar:
+                self.__toolbar.remove(toolbutton)
+        
+        perspective.hide()
+        perspective.getBrowseTree().get_parent().hide()
     
     def getPerspectives (self):
-        return (perspective for (perspective, button) in self.__perspectives)
+        return self.__perspectives.iterkeys()
     
     def __onPerspectiveButtonClicked (self, sourceButton):
-        for perspective, button in self.__perspectives:
+        for perspective, (button, toolbuttons) in self.__perspectives.items():
             if button == sourceButton:
                 self.showPerspective(perspective)
                 break
@@ -211,7 +229,7 @@ class Main (gtk.Window):
         self.add_accel_group(self.__ui.get_accel_group())
     
     def bringItOn (self):
-        self.show_all()
+        self.show()
         self.showPerspective(self.getPerspectives().next())
 
 def run (args):

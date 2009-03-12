@@ -50,5 +50,9 @@ class Perspective (gobject.GObject):
     def getWindow(self):
         return self.__window
     
-    def getToolbuttons(self):
+    def createToolbuttons(self):
         return []
+    
+    
+    def __eq__(self, o):
+        return self is o
