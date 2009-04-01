@@ -1,9 +1,6 @@
-if not "_" in globals():
-    _ = lambda x:x
-
 from gobject import *
 import re
-from pychess.Utils import const
+from pychess.Utils.const import *
 
 #types = "(blitz|lightning|standard)"
 rated = "(rated|unrated)"
@@ -15,19 +12,39 @@ ratingSplit = re.compile("P|E| ")
 
 unsupportedWilds = { # We need to disable wild 0 and 1, as they allow castling even
                 # when the king starts out in the d row. 
-                "wild/0": _("Asymmetric"),
-                "wild/1": _("Simple shuffle"),
+                "wild/0": _("Opposite Kings"),
+                "wild/1": _("Limited Shuffle"),
                 "bughouse": _("Bughouse"),
                 "crazyhouse": _("Crazyhouse"),
-                "suicide": _("Suicide") }
+                "suicide": _("Suicide"),
+                "atomic": _("Atomic") }
 
 wilds = { "wild/2": _("Shuffle"),
           "wild/3": _("Random"),
-          "wild/4": _("Asymmetric Shuffle"),
+          "wild/4": _("Asymmetric Random"),
           "wild/5": _("Upside Down"),
           "wild/8": _("Pawns Pushed"),
           "wild/8a": _("Pawns Passed"),
           "wild/fr": _("Fischer Random") }
+
+strToVariant = { "wild/2": SHUFFLECHESS,
+                 "wild/3": RANDOMCHESS,
+                 "wild/4": ASYMMETRICRANDOMCHESS,
+                 "wild/5": UPSIDEDOWNCHESS,
+                 "wild/8": PAWNSPUSHEDCHESS,
+                 "wild/8a": PAWNSPASSEDCHESS,
+                 "wild/fr": FISCHERRANDOMCHESS,
+                 "losers": LOSERSCHESS }
+
+variantToSeek = { NORMALCHESS : "",
+                  SHUFFLECHESS : "wild 2",
+                  RANDOMCHESS: "wild 3",
+                  ASYMMETRICRANDOMCHESS: "wild 4",
+                  UPSIDEDOWNCHESS : "wild 5",
+                  PAWNSPUSHEDCHESS : "wild 8",
+                  PAWNSPASSEDCHESS : "wild 8a",
+                  FISCHERRANDOMCHESS : "wild fr",
+                  LOSERSCHESS : "losers" }
 
 standards = { "blitz": _("Blitz"),
               "lightning": _("Lightning"),
@@ -79,7 +96,6 @@ def convertName (typename):
 
 #typedic = {"b":_("Blitz"), "s":_("Standard"), "l":_("Lightning")}
 
-from pychess.Utils.const import WHITE
 
 class GameListManager (GObject):
     
@@ -118,7 +134,7 @@ class GameListManager (GObject):
                 "\{Game (\d+) \(([A-Za-z]+) vs\. ([A-Za-z]+)\) ([A-Za-z']+) (.+)\} (\*|1/2-1/2|1-0|0-1)$")
         
         self.connection.expect_line (self.on_player_list,
-                "([A-Za-z]+)[\^~:\#. &](\\d{2})((?:\\d{1,4}[P E])+)")
+                "([A-Za-z]+)[\^~:\#. &](\\d{2})((?:\\d{1,4}[P E]?)+)")
         self.connection.expect_line (self.on_player_remove,
                 "%s is no longer available for matches." % names)
         self.connection.expect_fromto (self.on_player_add,
@@ -224,14 +240,20 @@ class GameListManager (GObject):
     
     def on_game_remove (self, match):
         gameno, wn, bn, person, comment, result = match.groups()
-        result = const.reprResult.index(result)
+        result = reprResult.index(result)
         self.emit("removeGame", gameno, result, comment)
     
     ###
     
     def on_player_list (self, match):
         handle, title, ratings = match.groups()
-        mean = sum(int(r) for r in ratingSplit.split(ratings)[:-1] if int(r))/3.
+        numratings = 0
+        ratingtotal = 0
+        for rating in ratingSplit.split(ratings):
+            if rating.isdigit() and int(rating) > 0:
+                numratings += 1
+                ratingtotal += int(rating)
+        mean = numratings > 0 and ratingtotal/numratings or 0
         self.emit("addPlayer", {"name": handle, "rating": mean, "title":int(title,16)})
         self.players.add(handle)
     
@@ -243,8 +265,13 @@ class GameListManager (GObject):
     
     def on_player_add (self, matches):
         name, title, blitz, std, wild, light, bug = matches[0].groups()
-        ratings = (blitz, std, wild, light, bug)
-        mean = sum(int(r) for r in ratings if r.strip().isdigit())/5.
+        numratings = 0
+        ratingtotal = 0
+        for rating in (blitz, std, wild, light, bug):
+            if rating.isdigit() and int(rating) > 0:
+                numratings += 1
+                ratingtotal += int(rating)
+        mean = numratings > 0 and ratingtotal/numratings or 0
         self.emit("addPlayer", {"name":name, "title":0, "rating":mean})
         self.players.add(name)
     

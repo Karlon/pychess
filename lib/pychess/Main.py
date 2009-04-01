@@ -1,3 +1,4 @@
+import os
 import sys
 import webbrowser
 import math
@@ -7,7 +8,7 @@ import signal
 import pango, gobject, gtk
 from gtk import DEST_DEFAULT_MOTION, DEST_DEFAULT_HIGHLIGHT, DEST_DEFAULT_DROP
 
-from pychess.System import conf, glock, uistuff
+from pychess.System import conf, glock, uistuff, prefix
 from pychess.System.uistuff import POSITION_NONE, POSITION_CENTER, POSITION_GOLDEN
 from pychess.System.Log import log
 from pychess.Utils.const import *
@@ -39,10 +40,6 @@ class GladeHandlers:
         
         # Bring playing window to the front
         gamewidget.getWidgets()["window1"].present()
-        
-        # Make sure game dependent menu entries are sensitive
-        for widget in gamewidget.MENU_ITEMS:
-            gamewidget.getWidgets()[widget].set_property('sensitive', True)
         
         # Make sure we can remove gamewidgets from gameDic later
         gmwidg.connect("closed", GladeHandlers.__dict__["on_gmwidg_closed"])
@@ -218,7 +215,12 @@ class PyChess:
         #---------------------------------------------------------- About dialog
         clb = widgets["aboutdialog1"].get_child().get_children()[1].get_children()[2]
         widgets["aboutdialog1"].set_name(NAME)
-        widgets["aboutdialog1"].set_version(VERSION_NAME+" "+VERSION)
+        if os.path.isfile(prefix.addDataPrefix(".svn/entries")):
+            f = open(prefix.addDataPrefix(".svn/entries"))
+            line4 = [f.next() for i in xrange(4)][-1].strip()
+            widgets["aboutdialog1"].set_version(VERSION_NAME+" r"+line4)
+        else:
+            widgets["aboutdialog1"].set_version(VERSION_NAME+" "+VERSION)
         def callback(button, *args):
             widgets["aboutdialog1"].hide()
             return True
@@ -250,7 +252,7 @@ class PyChess:
             glock.glock_connect_after(discoverer, "all_engines_discovered", do)
 
 def run (args):
-    #import gtkexcepthook
+    import gtkexcepthook
     PyChess(args)
     signal.signal(signal.SIGINT, gtk.main_quit)
     gtk.gdk.threads_init()

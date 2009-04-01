@@ -7,7 +7,7 @@ from pychess.Utils.const import *
 
 class ICGameModel (GameModel):
     
-    def __init__ (self, connection, gameno, timemodel, variant):
+    def __init__ (self, connection, gameno, timemodel, variant, rated=False):
         GameModel.__init__(self, timemodel, variant)
         self.connection = connection
         self.gameno = gameno
@@ -24,6 +24,7 @@ class ICGameModel (GameModel):
         self.connect("game_terminated", self.afterGameEnded)
         
         self.inControl = True
+        self.rated = rated
     
     def onBoardUpdate (self, bm, gameno, ply, curcol, lastmove, fen, wms, bms):
         if gameno != self.gameno:
@@ -112,7 +113,7 @@ class ICGameModel (GameModel):
     #
     
     def terminate (self):
-        #if self.status in (WAITING_TO_START, PAUSED, RUNNING):
-        if self.players[0].__type__ != REMOTE or self.players[1].__type__ != REMOTE:
-            self.connection.om.offer(Offer(RESIGNATION), -1)
+        if self.status in UNFINISHED_STATES:
+            if self.players[0].__type__ != REMOTE or self.players[1].__type__ != REMOTE:
+                self.connection.om.offer(Offer(RESIGNATION), -1)
         GameModel.terminate(self)

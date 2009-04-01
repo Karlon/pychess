@@ -52,6 +52,16 @@ def on_gmwidg_infront (gmwidg):
     for item in ACTION_MENU_ITEMS:
         getWidgets()[item].props.sensitive = not auto
 
+    for widget in MENU_ITEMS:
+        if (widget not in ('hint_mode', 'spy_mode')) or \
+           (widget == 'hint_mode' and gmwidg.gamemodel.hintEngineSupportsVariant == True \
+            and conf.get("analyzer_check", True)) or \
+           (widget == 'spy_mode' and gmwidg.gamemodel.spyEngineSupportsVariant == True \
+            and conf.get("inv_analyzer_check", True)):
+            getWidgets()[widget].set_property('sensitive', True)
+        else:
+            getWidgets()[widget].set_property('sensitive', False)
+
 #===============================================================================
 # Gamemodel signals
 #===============================================================================
@@ -104,7 +114,10 @@ def game_ended (gamemodel, reason, gmwidg):
     
     def cb (messageDialog, responseId):
         if responseId == 0:
-            nameDic["loser"].offerRematch()
+            if gamemodel.players[0].__type__ == REMOTE:
+                gamemodel.players[0].offerRematch()
+            else:
+                gamemodel.players[1].offerRematch()
         elif responseId == 1:
             from pychess.widgets.newGameDialog import createRematch
             createRematch(gamemodel)
@@ -137,6 +150,8 @@ def game_unended (gamemodel, gmwidg):
         glock.release()
 
 def on_game_started (gamemodel, gmwidg):
+    on_gmwidg_infront(gmwidg)  # setup menu items sensitivity
+
     # Rotate to human player
     boardview = gmwidg.board.view
     if gamemodel.players[1].__type__ == LOCAL:

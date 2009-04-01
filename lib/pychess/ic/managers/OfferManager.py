@@ -7,6 +7,7 @@ from pychess.Utils.const import *
 from pychess.Utils.Offer import Offer
 from pychess.System.Log import log
 from pychess.ic.managers.GameListManager import convertName
+from GameListManager import variantToSeek, unsupportedWilds
 
 names = "\w+(?:\([A-Z\*]+\))*"
 
@@ -26,7 +27,7 @@ matchre = re.compile ("(\w+) %s %s ?(\w+) %s %s (\w+) (\d+) (\d+)\s*(.*)" % \
 # Known offers: abort accept adjourn draw match pause unpause switch takeback
 #
 
-unsupportedtypes = ("wild/0", "wild/1", "bughouse", "crazyhouse", "suicide")
+unsupportedtypes = (unsupportedWilds.keys())
 
 strToOfferType = {
     "draw": DRAW_OFFER,
@@ -88,7 +89,7 @@ class OfferManager (GObject):
         self.lastPly = 0
         self.indexType = {}
         
-        self.connection.lvm.setVariable("formula", "!suicide & !crazyhouse & !bughouse")
+        self.connection.lvm.setVariable("formula", "!suicide & !crazyhouse & !bughouse & !atomic")
         self.connection.lvm.setVariable("pendinfo", True)
     
     def noOffersToAccept (self, match):
@@ -159,13 +160,13 @@ class OfferManager (GObject):
     
     ###
     
-    def challenge (self, playerName, startmin, incsec, rated, color=None):
+    def challenge (self, playerName, startmin, incsec, rated, color=None, variant=NORMALCHESS):
         rchar = rated and "r" or "u"
         if color != None:
             cchar = color == WHITE and "w" or "b"
         else: cchar = ""
-        print >> self.connection.client, "match %s %d %d %s %s" % \
-                (playerName, startmin, incsec, rchar, cchar)
+        print >> self.connection.client, "match %s %d %d %s %s %s" % \
+                (playerName, startmin, incsec, rchar, cchar, variantToSeek[variant])
     
     def offerRematch (self):
         print >> self.connection.client, "rematch"

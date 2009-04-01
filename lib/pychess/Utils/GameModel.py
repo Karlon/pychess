@@ -69,6 +69,9 @@ class GameModel (GObject, PooledThread):
 
         self.comment = ""
        
+        self.hintEngineSupportsVariant = False
+        self.spyEngineSupportsVariant = False
+        
         self.spectactors = {}
         
         self.applyingMoveLock = RLock()

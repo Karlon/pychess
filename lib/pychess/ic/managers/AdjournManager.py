@@ -1,5 +1,6 @@
 
 import re
+import datetime
 
 from gobject import *
 
@@ -7,10 +8,10 @@ from pychess.Utils.const import *
 
 names = "\w+(?:\([A-Z\*]+\))*"
 weekdays = ("Mon","Tue","Wed","Thu","Fri","Sat","Sun")
-months = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 sanmove = "([a-hxOoKQRBN0-8+#=-]{2,7})"
-moveListMoves = re.compile("(\d+)\. +%s +\(\d+:\d+\) *(?:%s +\(\d+:\d+\))?" %
+moveListMoves = re.compile("(\d+)\. +%s +\(\d+:\d+\.\d+\) *(?:%s +\(\d+:\d+\.\d+\))?" %
         (sanmove, sanmove))
 
 class AdjournManager (GObject):
@@ -62,6 +63,8 @@ class AdjournManager (GObject):
             move_num = match.groups()[9]
             eco = match.groups()[10]
             week, month, day, hour, minute, timezone, year = match.groups()[11:18]
+            gametime = datetime.datetime(int(year), months.index(month)+1, int(day),
+                                         int(hour), int(minute)).strftime("%x %H:%M")
             
             private = game_type[0] == "p"
             rated = game_type[2] == "r"
@@ -75,7 +78,7 @@ class AdjournManager (GObject):
             
             self.adjournments.append({"color":our_color, "opponent":opponent,
                                       "online":opponent_online, "length":length,
-                                      "minutes":minutes, "gain":gain})
+                                      "time":gametime, "minutes":minutes, "gain":gain})
             
             #print >> self.connection, "smoves %s" % opponent
         
@@ -87,8 +90,8 @@ class AdjournManager (GObject):
     def __onSmovesResponse (self, matchlist):
         #Move  PyChess            selman             
         #----  ----------------   ----------------
-        #  1.  e4      (0:00)     c5      (0:00)  
-        #  2.  Nf3     (0:00) 
+        #  1.  e4      (0:00.000)     c5      (0:00.000)  
+        #  2.  Nf3     (0:00.000) 
         #      {White lost connection; game adjourned} *
         
         white_name, black_name = matchlist[0].groups()
