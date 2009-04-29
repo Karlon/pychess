@@ -15,7 +15,7 @@ prefixes = ("/usr/share", "/usr/local/share", "/usr/share/locale",
     "/usr/share/games", "/usr/local/share/games")
 
 # Test if we are installed on the system, or are being run from tar/svn
-if "site-packages" in __file__:
+if "site-packages" in __file__ or "dist-packages" in __file__:
     for prefix in prefixes:
         if isdir (join (prefix, "pychess")):
             _prefix = join (prefix, "pychess")
