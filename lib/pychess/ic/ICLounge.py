@@ -7,9 +7,10 @@ from time import sleep, strftime, localtime
 from math import e
 import webbrowser
 
-import gtk, pango, re
+import gtk, gobject, pango, re
 from gtk import gdk
 from gtk.gdk import pixbuf_new_from_file
+from gobject import *
 
 from pychess.System import glock, uistuff
 from pychess.System.GtkWorker import EmitPublisher, Publisher
@@ -30,11 +31,33 @@ from pychess.Variants import variants
 
 from ICGameModel import ICGameModel
 
-class ICLounge:
+class ICLounge (GObject):
+    __gsignals__ = {
+        'logout'        : (SIGNAL_RUN_FIRST, None, ()),
+        'autoLogout'    : (SIGNAL_RUN_FIRST, None, ()),
+    }
+    
     def __init__ (self, c):
-
+        GObject.__init__(self)
+        self.connection = c
         self.widgets = w = uistuff.GladeWidgets("fics_lounge.glade")
         uistuff.keepWindowSize("fics_lounge", self.widgets["fics_lounge"])
+
+        def on_window_delete (window, event):
+            self.close()
+            self.emit("logout")
+            return True
+        self.widgets["fics_lounge"].connect("delete-event", on_window_delete)
+        def on_logoffButton_clicked (button):
+            self.close()
+            self.emit("logout")
+        self.widgets["logoffButton"].connect("clicked", on_logoffButton_clicked)        
+        def on_autoLogout (alm):
+            self.close()
+            self.emit("autoLogout")
+        self.connection.alm.connect("logOut", on_autoLogout)
+        self.connection.connect("disconnected", lambda connection: self.close())
+        self.connection.connect("error", lambda connection: self.close())
 
         global sections
         sections = (
@@ -63,6 +86,22 @@ class ICLounge:
     def show (self):
         self.widgets["fics_lounge"].show()
 
+    def present (self):
+        self.widgets["fics_lounge"].present()
+
+    def close (self):
+        if self.widgets == None:
+            return
+        self.widgets["fics_lounge"].hide()
+        global sections
+        for i in range(len(sections)):
+            if hasattr(sections[i], "__del__"):
+                sections[i].__del__()
+        sections = None
+        self.connection.disconnect()
+        self.connection = None
+        self.widgets = None
+
 ################################################################################
 # Initialize Sections                                                          #
 ################################################################################
@@ -76,16 +115,6 @@ class Section:
 
 class VariousSection(Section):
     def __init__ (self, widgets, connection):
-        def on_window_delete (window, event):
-            widgets["fics_lounge"].hide()
-            return True
-        widgets["fics_lounge"].connect("delete-event", on_window_delete)
-
-        def on_logoffButton_clicked (button):
-            widgets["fics_lounge"].emit("delete-event", None)
-            connection.disconnect()
-        widgets["logoffButton"].connect("clicked", on_logoffButton_clicked)
-
         sizeGroup = gtk.SizeGroup(gtk.SIZE_GROUP_HORIZONTAL)
         sizeGroup.add_widget(widgets["show_chat_label"])
         sizeGroup.add_widget(widgets["show_console_label"])
@@ -103,6 +132,7 @@ class UserInfoSection(Section):
     def __init__ (self, widgets, connection):
         self.widgets = widgets
         self.connection = connection
+        self.pinger = None
 
         self.dock = self.widgets["fingerTableDock"]
 
@@ -113,6 +143,10 @@ class UserInfoSection(Section):
 
         self.widgets["usernameLabel"].set_markup(
                 "<b>%s</b>" % self.connection.getUsername())
+
+    def __del__ (self):
+        if self.pinger != None:
+            self.pinger.stop()
 
     def onFinger (self, fm, finger):
         if finger.getName().lower() != self.connection.getUsername().lower():
@@ -169,7 +203,7 @@ class UserInfoSection(Section):
             table.attach(label(_("Ping")+":"), 0, 1, row, row+1)
             pingLabel = gtk.Label(_("Connecting")+"...")
             pingLabel.props.xalign = 0
-            pinger = Pinger("freechess.org")
+            self.pinger = pinger = Pinger("freechess.org")
             def callback (pinger, pingtime):
                 if type(pingtime) == str:
                     pingLabel.set_text(pingtime)
@@ -191,7 +225,7 @@ class UserInfoSection(Section):
                 label0.props.width_request = 300
                 vbox.add(label0)
                 eventbox = uistuff.initLabelLinks(_("Register now"),
-                        "http://freechess.org/Register/index.html")
+                        "http://www.freechess.org/Register/index.html")
                 vbox.add(eventbox)
 
             if self.dock.get_children():
@@ -339,7 +373,7 @@ class SeekTabSection (ParrentListSection):
         self.connection.bm.connect("playBoardCreated", lambda bm, board:
                 self.listPublisher.put((self.onPlayingGame,)) )
 
-        self.connection.bm.connect("curGameEnded", lambda bm, gameno, status, reason:
+        self.connection.bm.connect("curGameEnded", lambda bm, gameno, wname, bname, status, reason:
                 self.listPublisher.put((self.onCurGameEnded,)) )
 
     def onAddSeek (self, seek):
@@ -481,7 +515,7 @@ class SeekGraphSection (ParrentListSection):
         self.connection.bm.connect("playBoardCreated", lambda bm, board:
                 self.listPublisher.put((self.onPlayingGame,)) )
 
-        self.connection.bm.connect("curGameEnded", lambda bm, gameno, status, reason:
+        self.connection.bm.connect("curGameEnded", lambda bm, gameno, wname, bname, status, reason:
                 self.listPublisher.put((self.onCurGameEnded,)) )
 
     def onSpotClicked (self, graph, name):
@@ -654,7 +688,7 @@ class GameTabSection (ParrentListSection):
         self.connection.glm.connect("addGame", lambda glm, game:
                 self.listPublisher.put((self.onGameAdd, game)) )
 
-        self.connection.glm.connect("removeGame", lambda glm, gameno, res, com:
+        self.connection.glm.connect("removeGame", lambda glm, gameno, wname, bname, res, com:
                 self.listPublisher.put((self.onGameRemove, gameno)) )
 
         self.connection.bm.connect("wasPrivate", lambda bm, game:
@@ -764,14 +798,14 @@ class AdjournedTabSection (ParrentListSection):
                 self.listPublisher.put((self.onAdjournmentsList, adjournments)) )
         self.connection.adm.queryAdjournments()
 
-        self.connection.bm.connect("curGameEnded", lambda bm, gameno, result, reason:
+        self.connection.bm.connect("curGameEnded", lambda bm, gameno, wname, bname, result, reason:
                 self.listPublisher.put((self.onCurGameEnded, result)))
 
         # Set up buttons
 
         widgets["previewButton"].connect("clicked", self.onPreviewButtonClicked)
-        self.connection.adm.connect("onGamePreview", lambda adm, pgn, secs, gain, whitename, blackname:
-                self.listPublisher.put((self.onGamePreview, pgn, secs, gain, whitename, blackname)))
+        self.connection.adm.connect("onGamePreview", lambda adm, pgn, secs, gain, wname, bname:
+                self.listPublisher.put((self.onGamePreview, pgn, secs, gain, wname, bname)))
 
 
     def onAdjournmentsList (self, adjournments):
@@ -796,7 +830,7 @@ class AdjournedTabSection (ParrentListSection):
         opponent = model.get_value(iter, 1)
         self.connection.adm.queryMoves(opponent)
 
-    def onGamePreview (self, pgn, secs, gain, whitename, blackname):
+    def onGamePreview (self, pgn, secs, gain, wname, bname):
         print pgn
 
         #if not connection.registered:
@@ -978,19 +1012,22 @@ class CreatedBoards (Section):
 
     def playBoardCreated (self, bm, board):
 
-        timemodel = TimeModel (board["wms"]/1000., board["gain"], bsecs=board["bms"]/1000.)
+        if board["wms"] == 0 and board["bms"] == 0:
+            timemodel = None
+        else:
+            timemodel = TimeModel (board["wms"]/1000., board["gain"], bsecs=board["bms"]/1000.)
         game = ICGameModel (self.connection, board["gameno"], timemodel, variants[board["variant"]], board["rated"])
 
         if board["wname"].lower() == self.connection.getUsername().lower():
-            player0tup = (LOCAL, Human, (WHITE, ""), _("Human"))
+            player0tup = (LOCAL, Human, (WHITE, "", board["wname"]), _("Human"), board["wrating"])
             player1tup = (REMOTE, ICPlayer,
-                    (game, board["bname"], board["gameno"], BLACK), board["bname"])
+                    (game, board["bname"], board["gameno"], BLACK), board["bname"], board["brating"])
         else:
-            player1tup = (LOCAL, Human, (BLACK, ""), _("Human"))
+            player1tup = (LOCAL, Human, (BLACK, "", board["bname"]), _("Human"), board["brating"])
             # If the remote player is WHITE, we need to init him right now, so
             # we can catch fast made moves
             player0 = ICPlayer(game, board["wname"], board["gameno"], WHITE)
-            player0tup = (REMOTE, lambda:player0, (), board["wname"])
+            player0tup = (REMOTE, lambda:player0, (), board["wname"], board["wrating"])
 
         if not board["fen"]:
             ionest.generalStart(game, player0tup, player1tup)
@@ -1000,7 +1037,10 @@ class CreatedBoards (Section):
 
     def observeBoardCreated (self, bm, board):
 
-        timemodel = TimeModel (board["wms"]/1000., board["gain"], bsecs=board["bms"]/1000.)
+        if board["wms"] == 0 and board["bms"] == 0:
+            timemodel = None
+        else:
+            timemodel = TimeModel (board["wms"]/1000., board["gain"], bsecs=board["bms"]/1000.)
         game = ICGameModel (self.connection, board["gameno"], timemodel, variants[board["variant"]], board["rated"])
 
         # The players need to start listening for moves IN this method if they
@@ -1008,8 +1048,8 @@ class CreatedBoards (Section):
         player0 = ICPlayer(game, board["wname"], board["gameno"], WHITE)
         player1 = ICPlayer(game, board["bname"], board["gameno"], BLACK)
 
-        player0tup = (REMOTE, lambda:player0, (), board["wname"])
-        player1tup = (REMOTE, lambda:player1, (), board["bname"])
+        player0tup = (REMOTE, lambda:player0, (), board["wname"], board["wrating"])
+        player1tup = (REMOTE, lambda:player1, (), board["bname"], board["brating"])
 
         ionest.generalStart(game, player0tup, player1tup,
                             (StringIO(board["pgn"]), pgn, 0, -1))

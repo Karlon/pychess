@@ -8,25 +8,50 @@ from pychess.Utils.const import *
 from pychess.Players.engineNest import discoverer
 from pychess.System.prefix import addDataPrefix
 
+
 firstRun = True
 def run(widgets):
     global firstRun
+    from pychess.widgets.gamewidget import attachGameWidget
     if firstRun:
         initialize(widgets)
         firstRun = False
     widgets["preferences"].show()
 
+    nb = widgets["notebook1"]
+    page_widget = nb.get_nth_page(nb.get_current_page())
+    if nb.get_tab_label(page_widget).get_text() == _('Sidepanels'):
+        attachGameWidget(panels_gw)
+
+panels_gw = None
 def initialize(widgets):
-    
+    global panels_gw
+    from pychess.widgets.gamewidget import key2gmwidg, attachGameWidget, delGameWidget
     def delete_event (widget, *args):
         widgets["preferences"].hide()
+        if panels_gw in key2gmwidg.values():
+            delGameWidget(panels_gw)
         return True
     
     GeneralTab(widgets)
     EngineTab(widgets)
     SoundTab(widgets)
     PanelTab(widgets)
-    
+
+    from pychess.Utils.GameModel import GameModel
+    from pychess.widgets.gamewidget import GameWidget
+    panels_gw = GameWidget(GameModel())
+
+    def switch_handler(widget, gpointer, pagenum):
+        page_widget = widget.get_nth_page(pagenum)
+        if widget.get_tab_label(page_widget).get_text() == _('Sidepanels'):
+            attachGameWidget(panels_gw)
+        else:
+            if panels_gw in key2gmwidg.values():
+                delGameWidget(panels_gw)
+
+    widgets["notebook1"].connect("switch_page", switch_handler)    
+
     widgets["preferences"].connect("delete-event", delete_event)
     widgets["preferences_close_button"].connect("clicked", delete_event)
 
@@ -395,16 +420,17 @@ class PanelTab:
 
         tv.append_column(gtk.TreeViewColumn(
                 "Name", gtk.CellRendererText(), text=2))
-        
+
     def col_toggled( self, cell, path, model ):
         """
         Sets the toggled state on the toggle button to true or false.
         """
         model[path][0] = not model[path][0]
         panel = model[path][3].__name__
-        print "Toggle '%s' to: %s" % (panel, model[path][0],)
+
         from pychess.widgets.gamewidget import notebooks, docks
         from pychess.widgets.pydock.__init__ import EAST
+
         if model[path][0]:
             conf.set(panel, True)
             leaf = notebooks["board"].get_parent().get_parent()

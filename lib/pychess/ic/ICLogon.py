@@ -21,11 +21,13 @@ def run():
     
     if not dialog:
         dialog = ICLogon()
-    
-    if dialog.lounge:
-        dialog.lounge.show()
-    else:
         dialog.show()
+    elif dialog.lounge:
+        dialog.lounge.present()
+    else:
+        dialog.present()
+
+class AutoLogoutException (Exception): pass    
 
 class ICLogon:
     def __init__ (self):
@@ -44,7 +46,8 @@ class ICLogon:
             self.widgets["passEntry"].set_sensitive(not check.get_active())
         self.widgets["logOnAsGuest"].connect("toggled", on_logOnAsGuest_toggled)
         uistuff.keep(self.widgets["logOnAsGuest"], "logOnAsGuest")
-        
+        uistuff.keep(self.widgets["nameEntry"], "usernameEntry")
+        uistuff.keep(self.widgets["passEntry"], "passwordEntry")
         uistuff.makeYellow(self.widgets["messagePanel"])
         
         self.widgets["cancelButton"].connect("clicked", self.onCancel, True)
@@ -59,6 +62,9 @@ class ICLogon:
     
     def show (self):
         self.widgets["fics_logon"].show()
+    
+    def present (self):
+        self.widgets["fics_logon"].present()
     
     def hide (self):
         self.widgets["fics_logon"].hide()
@@ -100,7 +106,7 @@ class ICLogon:
         return True
     
     def onCreateNew (self, button):
-        webbrowser.open("http://freechess.org/Register/index.html")
+        webbrowser.open("http://www.freechess.org/Register/index.html")
     
     def showError (self, connection, error):
         # Don't bring up errors, if we have pressed "stop"
@@ -121,6 +127,9 @@ class ICLogon:
                 isinstance (error, socket.herror):
             title = _("Address Error")
             text = ", ".join(map(str,error.args))
+        elif isinstance (error, AutoLogoutException):
+            title = _("Auto-logout")
+            text = _("You have been logged out because you were idle more than 60 minutes")
         else:
             title = str(error.__class__)
         
@@ -150,6 +159,8 @@ class ICLogon:
         self.lounge = ICLounge(connection)
         self.hide()
         self.lounge.show()
+        self.lounge.connect("logout", lambda iclounge: self.onDisconnected(None))
+        self.lounge.connect("autoLogout", lambda iclounge: self.onAutologout(None))
         
         self.showNormal()
         self.widgets["messagePanel"].hide()
@@ -157,6 +168,12 @@ class ICLogon:
     def onDisconnected (self, connection):
         global dialog
         dialog = None
+    
+    def onAutologout (self, alm):
+        self.show()
+        self.lounge = None
+        self.connection = None
+        self.showError(None, AutoLogoutException())
     
     def onConnectClicked (self, button):
         if self.widgets["logOnAsGuest"].get_active():
@@ -174,7 +191,6 @@ class ICLogon:
         
         self.connection = FICSConnection("freechess.org", ports, username, password)
         glock.glock_connect(self.connection, "connected", self.onConnected)
-        self.connection.connect("disconnected", self.onDisconnected)
         glock.glock_connect(self.connection, "error", self.showError)
         glock.glock_connect(self.connection, "connectingMsg", self.showMessage)
         

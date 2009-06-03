@@ -420,14 +420,17 @@ def _ensureReadForGameWidgets ():
         
         # NE
         leaf = leaf.dock(docks["historyPanel"][1], EAST, docks["historyPanel"][0], "historyPanel")
+        conf.set("historyPanel", True)
         leaf = leaf.dock(docks["scorePanel"][1], CENTER, docks["scorePanel"][0], "scorePanel")
-        leaf = leaf.dock(docks["notationPanel"][1], EAST, docks["notationPanel"][0], "notationPanel")
+        conf.set("scorePanel", True)
         
         # SE
         leaf = leaf.dock(docks["bookPanel"][1], SOUTH, docks["bookPanel"][0], "bookPanel")
+        conf.set("bookPanel", True)
         leaf = leaf.dock(docks["commentPanel"][1], CENTER, docks["commentPanel"][0], "commentPanel")
+        conf.set("commentPanel", True)
         leaf = leaf.dock(docks["chatPanel"][1], CENTER, docks["chatPanel"][0], "chatPanel")
-        leaf = leaf.dock(docks["gamelistPanel"][1], SOUTH, docks["gamelistPanel"][0], "gamelistPanel")
+        conf.set("chatPanel", True)
     
     dock.connect("unrealize", lambda dock: dock.saveToXML(dockLocation))
     

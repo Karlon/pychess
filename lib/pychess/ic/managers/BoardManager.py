@@ -8,10 +8,10 @@ from GameListManager import strToVariant, unsupportedWilds
 
 from pychess.ic.VerboseTelnet import *
 
-names = "(\w+)(?:\(([CUHIFWM])\))?"
-# FIXME: What about names like: Nemisis(SR)(CA)(TM) and Rebecca(*)(SR)(TD) ?
+names = "(\w+)"
+titles = "((?:\((?:GM|IM|FM|WGM|WIM|TM|SR|TD|SR|CA|C|U|D|B|T|\*)\))+)?"
 ratedexp = "(rated|unrated)"
-ratings = "\(([0-9\ \-\+]+|UNR)\)"
+ratings = "\(([-0-9 +]+|UNR)\)"
 sanmove = "([a-hxOoKQRBN0-8+#=-]{2,7})"
 
 moveListNames = re.compile("%s %s vs. %s %s --- .*" %
@@ -47,9 +47,9 @@ class BoardManager (GObject):
         'playBoardCreated'    : (SIGNAL_RUN_FIRST, None, (object,)),
         'observeBoardCreated' : (SIGNAL_RUN_FIRST, None, (object,)),
         'wasPrivate'          : (SIGNAL_RUN_FIRST, None, (str,)),
-        'boardUpdate'         : (SIGNAL_RUN_FIRST, None, (str, int, int, str, str, int, int)),
-        'obsGameEnded'        : (SIGNAL_RUN_FIRST, None, (str, int, int)),
-        'curGameEnded'        : (SIGNAL_RUN_FIRST, None, (str, int, int)),
+        'boardUpdate'         : (SIGNAL_RUN_FIRST, None, (str, int, int, str, str, str, str, int, int)),
+        'obsGameEnded'        : (SIGNAL_RUN_FIRST, None, (str, str, str, int, int)),
+        'curGameEnded'        : (SIGNAL_RUN_FIRST, None, (str, str, str, int, int)),
         'obsGameUnobserved'   : (SIGNAL_RUN_FIRST, None, (str,)),
         'gamePaused'          : (SIGNAL_RUN_FIRST, None, (str, bool))
     }
@@ -95,6 +95,8 @@ class BoardManager (GObject):
         self.connection.lvm.setVariable("startpos", True)
         # movecase ensures that bc3 will never be a bishop move
         self.connection.lvm.setVariable("movecase", True)
+        # don't unobserve games when we start a new game
+        self.connection.lvm.setVariable("unobserve", "3")
         self.connection.lvm.setVariable("formula", "")
         
         # gameinfo <g1> doesn't really have any interesting info, at least not
@@ -171,7 +173,7 @@ class BoardManager (GObject):
         # Standard chess numbering
         fen += fields[25]
         
-        return gameno, relation, curcol, ply, wms, bms, gain, lastmove, fen
+        return gameno, relation, curcol, ply, wname, bname, wms, bms, gain, lastmove, fen
     
     def onStyle12 (self, match):
         style12 = match.groups()[0]
@@ -182,9 +184,9 @@ class BoardManager (GObject):
             return
         
         castleSigns = self.castleSigns[gameno]
-        gameno, relation, curcol, ply, wms, bms, gain, lastmove, fen = \
+        gameno, relation, curcol, ply, wname, bname, wms, bms, gain, lastmove, fen = \
                 self.__parseStyle12(style12, castleSigns)
-        self.emit("boardUpdate", gameno, ply, curcol, lastmove, fen, wms, bms)
+        self.emit("boardUpdate", gameno, ply, curcol, lastmove, fen, wname, bname, wms, bms)
     
     def onWasPrivate (self, match):
         gameno, = match.groups()
@@ -208,9 +210,17 @@ class BoardManager (GObject):
         else:
             return ("k", "q")
     
+    def parseDigits(self, rating):
+        if rating:
+            m = re.match("[0-9]+", rating)
+            if m: return m.group(0)
+            else: return None
+        else: return None
+    
     def playBoardCreated (self, matchlist):
         
-        gameno, wname, wtit, bname, btit, rated, type = matchlist[1].groups()
+        wname, wrating, bname, brating, rated, type, min, inc = matchlist[0].groups()
+        gameno, wname, bname, rated, type = matchlist[1].groups()
         style12 = matchlist[-1].groups()[0]
         
         rated = rated == "rated"
@@ -218,10 +228,11 @@ class BoardManager (GObject):
         castleSigns = self.__generateCastleSigns(style12, variant)
         
         self.castleSigns[gameno] = castleSigns
-        gameno, relation, curcol, ply, wms, bms, gain, lastmove, fen = \
+        gameno, relation, curcol, ply, wname, bname, wms, bms, gain, lastmove, fen = \
                 self.__parseStyle12(style12, castleSigns)
         
-        board = {"wname": wname, "wtitle": wtit, "bname": bname, "btitle": btit,
+        board = {"wname": wname, "wrating": self.parseDigits(wrating),
+                 "bname": bname, "brating": self.parseDigits(brating),
                  "rated": rated, "wms": wms, "bms":bms, "gain": gain,
                  "gameno": gameno, "variant":variant, "fen": fen}
         self.ourGameno = gameno
@@ -232,7 +243,7 @@ class BoardManager (GObject):
         # Get info from match
         gameno = matchlist[0].groups()[0]
         
-        whitename, whitetitle, whiterating, blackname, blacktitle, blackrating = \
+        wname, wrating, bname, brating = \
                 moveListNames.match(matchlist[2]).groups()
         
         rated, type, minutes, increment = \
@@ -243,7 +254,7 @@ class BoardManager (GObject):
         if matchlist[5].startswith("<12>"):
             style12 = matchlist[5][5:]
             castleSigns = self.__generateCastleSigns(style12, variant)
-            gameno, relation, curcol, ply, wms, bms, gain, lastmove, fen = \
+            gameno, relation, curcol, ply, wname, bname, wms, bms, gain, lastmove, fen = \
                     self.__parseStyle12(style12, castleSigns)
             initialfen = fen
             movesstart = 9
@@ -269,9 +280,10 @@ class BoardManager (GObject):
         
         # Apply queued board updates
         for style12 in self.queuedUpdates[gameno]:
-            gameno, relation, curcol, ply, wms, bms, gain, lastmove, fen = \
+            gameno, relation, curcol, ply, wname, bname, wms, bms, gain, lastmove, fen = \
                     self.__parseStyle12(style12, castleSigns)
-            
+            if lastmove == None:
+                continue
             moves[ply-1] = lastmove
             # Updated the queuedMoves in case there has been a takeback
             for moveply in moves.keys():
@@ -282,8 +294,8 @@ class BoardManager (GObject):
         pgnHead = [
             ("Event", "Ficsgame"),
             ("Site", "Internet"),
-            ("White", whitename),
-            ("Black", blackname)
+            ("White", wname),
+            ("Black", bname)
         ]
         if initialfen:
             pgnHead += [
@@ -293,10 +305,10 @@ class BoardManager (GObject):
             if variant == FISCHERRANDOMCHESS:
                 pgnHead += [("Variant", "Fischerandom")]
         
-        if whiterating not in ("0", "UNR", "----"):
-            pgnHead.append(("WhiteElo", whiterating))
-        if blackrating not in ("0", "UNR", "----"):
-            pgnHead.append(("BlackElo", blackrating))
+        if wrating not in ("0", "UNR", "----"):
+            pgnHead.append(("WhiteElo", wrating))
+        if brating not in ("0", "UNR", "----"):
+            pgnHead.append(("BlackElo", brating))
         
         pgn = "\n".join(['[%s "%s"]' % line for line in pgnHead]) + "\n"
         
@@ -311,14 +323,14 @@ class BoardManager (GObject):
         
         if self.queuedUpdates[gameno]:
             style12 = self.queuedUpdates[gameno][-1]
-            gameno, relation, curcol, ply, wms, bms, gain, lastmove, fen = \
+            gameno, relation, curcol, ply, wname, bname, wms, bms, gain, lastmove, fen = \
                     self.__parseStyle12(style12, castleSigns)
         else:
             wms = bms = int(minutes)*60*1000
             gain = int(increment)
         
-        board = {"wname": whitename, "wtitle": whitetitle,
-                 "bname": blackname, "btitle": blacktitle,
+        board = {"wname": wname, "wrating": self.parseDigits(wrating),
+                 "bname": bname, "brating": self.parseDigits(brating),
                  "rated": rated.lower()=="rated",
                  "wms": wms, "bms":bms, "gain": gain,
                  "gameno": gameno, "variant":variant, "pgn": pgn}
@@ -333,7 +345,7 @@ class BoardManager (GObject):
         del self.queuedUpdates[gameno]
         del self.queuedCalls[gameno]
     
-    def onGameEnd (self, glm, gameno, result, comment):
+    def onGameEnd (self, glm, gameno, wname, bname, result, comment):
         parts = set(re.findall("\w+",comment))
         if result in (WHITEWON, BLACKWON):
             if "resigns" in parts:
@@ -402,10 +414,10 @@ class BoardManager (GObject):
             reason = UNKNOWN_REASON
         
         if gameno == self.ourGameno:
-            self.emit("curGameEnded", gameno, result, reason)
+            self.emit("curGameEnded", gameno, wname, bname, result, reason)
             self.ourGameno = ""
         else:
-            f = lambda: self.emit("obsGameEnded", gameno, result, reason)
+            f = lambda: self.emit("obsGameEnded", gameno, wname, bname, result, reason)
             if gameno in self.queuedCalls:
                 log.debug("added observed game ended to queue")
                 self.queuedCalls[gameno].append(f)
