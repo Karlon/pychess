@@ -176,10 +176,8 @@ def parse_string(string, model, board, position, parent=None, variation=False):
                 last_board = board
 
                 if not variation:
-                    # This is for the sidepanels
                     model.moves.append(move)
                     model.boards.append(board)
-                    model.emit("game_changed")
 
             elif group == COMMENT_REST:
                 last_board.comments.append(text[1:])
@@ -256,7 +254,7 @@ class PGNFile (ChessFile):
                 [model.timemodel.intervals[0][0]]*(whites+1),
                 [model.timemodel.intervals[1][0]]*(blacks+1),
             ]
-            log.debug("intervals %s" % model.timemodel.intervals)
+            log.debug("intervals %s\n" % model.timemodel.intervals)
         
         if model.status == WAITING_TO_START:
             model.status, model.reason = getStatus(model.boards[-1])

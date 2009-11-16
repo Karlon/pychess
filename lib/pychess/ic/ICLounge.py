@@ -90,15 +90,16 @@ class ICLounge (GObject):
         self.widgets["fics_lounge"].present()
 
     def close (self):
-        if self.widgets == None:
-            return
-        self.widgets["fics_lounge"].hide()
+        if self.widgets != None:
+            self.widgets["fics_lounge"].hide()
         global sections
-        for i in range(len(sections)):
-            if hasattr(sections[i], "__del__"):
-                sections[i].__del__()
+        if sections != None:
+            for i in range(len(sections)):
+                if hasattr(sections[i], "__del__"):
+                    sections[i].__del__()
         sections = None
-        self.connection.disconnect()
+        if self.connection != None:
+            self.connection.disconnect()
         self.connection = None
         self.widgets = None
 
@@ -219,7 +220,7 @@ class UserInfoSection(Section):
             if not self.connection.isRegistred():
                 vbox = gtk.VBox()
                 table.attach(vbox, 0, 6, row, row+1)
-                label0 = gtk.Label(_("You are currently logged in as a guest.\nA guest is not able to play rated games, and thus the offer of games is be smaller."))
+                label0 = gtk.Label(_("You are currently logged in as a guest.\nA guest is not able to play rated games, and thus the offer of games will be smaller."))
                 label0.props.xalign = 0
                 label0.props.wrap = True
                 label0.props.width_request = 300
@@ -327,6 +328,12 @@ class ParrentListSection (Section):
         if type(pix0) == gtk.gdk.Pixbuf and type(pix1) == gtk.gdk.Pixbuf:
             return cmp(pix0.get_pixels(), pix1.get_pixels())
         return cmp(pix0, pix1)
+    
+    def timeCompareFunction (self, treemodel, iter0, iter1, column):
+        (minute0, minute1) = (treemodel.get_value(iter0, 7), treemodel.get_value(iter1, 7))
+        return cmp(minute0, minute1)
+
+
 
 ########################################################################
 # Initialize Seek List                                                 #
@@ -346,12 +353,13 @@ class SeekTabSection (ParrentListSection):
         self.manSeekPix = pixbuf_new_from_file(addDataPrefix("glade/manseek.png"))
 
         self.tv = self.widgets["seektreeview"]
-        self.store = gtk.ListStore(str, gtk.gdk.Pixbuf, str, int, str, str, str)
+        self.store = gtk.ListStore(str, gtk.gdk.Pixbuf, str, int, str, str, str, float)
         self.tv.set_model(gtk.TreeModelSort(self.store))
         self.addColumns (
                 self.tv, "GameNo", "", _("Name"), _("Rating"), _("Rated"),
-                _("Type"), _("Clock"), hide=[0], pix=[1] )
+                _("Type"), _("Clock"),"", hide=[0,7], pix=[1] )
         self.tv.set_search_column(2)
+        self.tv.get_model().set_sort_func(6, self.timeCompareFunction, 0)
         try:
             self.tv.set_search_position_func(self.lowLeftSearchPosFunc)
         except AttributeError:
@@ -381,7 +389,7 @@ class SeekTabSection (ParrentListSection):
         rated = seek["r"] == "u" and _("Unrated") or _("Rated")
         pix = seek["manual"] and self.manSeekPix or self.seekPix
         ti = self.store.append ([seek["gameno"], pix, seek["w"],
-                                int(seek["rt"]), rated, seek["tp"], time])
+                                int(seek["rt"]), rated, seek["tp"], time, float(seek["t"] + "." + seek["i"])])
         self.seeks [seek["gameno"]] = ti
         count = len(self.seeks)
         postfix = count == 1 and _("Active Seek") or _("Active Seeks")
@@ -453,7 +461,8 @@ class ChallengeTabSection (ParrentListSection):
         time = _("%(min)s min + %(sec)s sec") % {'min': match["t"], 'sec': match["i"]}
         rated = match["r"] == "u" and _("Unrated") or _("Rated")
         ti = self.store.append (["C"+index, self.chaPix, match["w"],
-                                int(match["rt"]), rated, match["tp"], time])
+                                int(match["rt"]), rated, match["tp"], time,
+                                float(match["t"] + "." + match["i"])])
         self.challenges [index] = ti
         count = int(self.widgets["activeSeeksLabel"].get_text().split()[0])+1
         postfix = count == 1 and _("Active Seek") or _("Active Seeks")
@@ -1017,6 +1026,7 @@ class CreatedBoards (Section):
         else:
             timemodel = TimeModel (board["wms"]/1000., board["gain"], bsecs=board["bms"]/1000.)
         game = ICGameModel (self.connection, board["gameno"], timemodel, variants[board["variant"]], board["rated"])
+        game.connect("game_started", lambda gamemodel: self.connection.bm.onGameModelStarted(board["gameno"]))
 
         if board["wname"].lower() == self.connection.getUsername().lower():
             player0tup = (LOCAL, Human, (WHITE, "", board["wname"]), _("Human"), board["wrating"])
@@ -1042,6 +1052,7 @@ class CreatedBoards (Section):
         else:
             timemodel = TimeModel (board["wms"]/1000., board["gain"], bsecs=board["bms"]/1000.)
         game = ICGameModel (self.connection, board["gameno"], timemodel, variants[board["variant"]], board["rated"])
+        game.connect("game_started", lambda gamemodel: self.connection.bm.onGameModelStarted(board["gameno"]))
 
         # The players need to start listening for moves IN this method if they
         # want to be noticed of all moves the FICS server sends us from now on

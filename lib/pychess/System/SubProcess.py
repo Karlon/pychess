@@ -2,6 +2,7 @@ import os
 import signal
 import errno
 import time
+import threading
 
 import gtk
 import gobject
@@ -25,6 +26,14 @@ def searchPath (file, pathvar="PATH", access=os.R_OK):
             else:
                 return path
     return None
+
+subprocesses = []
+def finishAllSubprocesses ():
+    for subprocess in subprocesses:
+        if subprocess.subprocExitCode[0] == None:
+            subprocess.gentleKill(0,0.3)
+    for subprocess in subprocesses:
+        subprocess.subprocFinishedEvent.wait()
 
 class SubProcess (gobject.GObject):
     
@@ -64,7 +73,15 @@ class SubProcess (gobject.GObject):
         self.outChannel = self._initChannel(stdout, readFlags, self.__io_cb, False)
         self.errChannel = self._initChannel(stderr, readFlags, self.__io_cb, True)
         
+        self.channelsClosed = False
+        self.channelsClosedLock = threading.Lock()
         gobject.child_watch_add(self.pid, self.__child_watch_callback)
+        
+        self.subprocExitCode = (None, None)
+        self.subprocFinishedEvent = threading.Event()
+        self.subprocFinishedEvent.clear()
+        subprocesses.append(self)
+        pool.start(self._wait4exit)
     
     def _initChannel (self, filedesc, callbackflag, callback, isstderr):
         channel = gobject.IOChannel(filedesc)
@@ -75,6 +92,14 @@ class SubProcess (gobject.GObject):
         return channel
     
     def _closeChannels (self):
+        self.channelsClosedLock.acquire()
+        try:
+            if self.channelsClosed == True:
+                return
+            self.channelsClosed = True
+        finally:
+            self.channelsClosedLock.release()
+
         for tag in self.__channelTags:
             gobject.source_remove(tag)
         for channel in (self.inChannel, self.outChannel, self.errChannel):
@@ -120,10 +145,7 @@ class SubProcess (gobject.GObject):
             except gobject.GError, e:
                 log.error(str(e)+". Last line wasn't sent.\n", self.defname)
     
-    def wait4exit (self, timeout=None):
-        if timeout != None:
-            signal.alarm(timeout)
-        
+    def _wait4exit (self):
         try:
             pid, code = os.waitpid(self.pid, 0)
         except OSError, error:
@@ -131,17 +153,8 @@ class SubProcess (gobject.GObject):
                 pid, code = self.pid, error.errno
             else:
                 raise
-        
-        # Cancel the alarm
-        signal.alarm(0)
-        
-        # Test if we were interrupted by alarm
-        if code == errno.EINTR:
-            return None, None
-        
-        code = (code, os.strerror(code))
-        log.debug("Exitcode %d %s\n" % code, self.defname)
-        return code
+
+        self.subprocExitCode = (code, os.strerror(code))
     
     def sendSignal (self, sign):
         try:
@@ -159,14 +172,19 @@ class SubProcess (gobject.GObject):
     def __gentleKill_inner (self, first, second):
         self.resume()
         self._closeChannels()
-        code, string = self.wait4exit(timeout=first)
+        time.sleep(first)
+        code, string = self.subprocExitCode
         if code == None:
             self.sigterm()
-            code, string = self.wait4exit(timeout=second)
+            time.sleep(second)
+            code, string = self.subprocExitCode
             if code == None:
                 self.sigkill()
-                return self.wait4exit()[0]
+                self.subprocFinishedEvent.set()
+                return self.subprocExitCode[0]
+            self.subprocFinishedEvent.set()
             return code
+        self.subprocFinishedEvent.set()
         return code
     
     def pause (self):

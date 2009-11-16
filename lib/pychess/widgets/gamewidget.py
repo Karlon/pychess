@@ -279,7 +279,8 @@ class GameWidget (gobject.GObject):
             self.messageSock.remove(self.messageSock.child)
         self.messageSock.add(message)
         self.messageSock.show_all()
-        notebooks["messageArea"].show()
+        if self == cur_gmwidg():
+            notebooks["messageArea"].show()
     
     def hideMessage (self):
         self.messageSock.hide()
@@ -369,7 +370,6 @@ def _ensureReadForGameWidgets ():
         hbox.set_spacing(2)
         hbox.show_all()
         
-        tip = gtk.Tooltip()
         def cb (widget, x, y, keyboard_mode, tooltip, title, desc, filename):
             table = gtk.Table(2,2)
             table.set_row_spacings(2)
@@ -494,6 +494,7 @@ def attachGameWidget (gmwidg):
 
 def cur_gmwidg ():
     headbook = getheadbook()
+    if headbook == None: return None
     notebookKey = headbook.get_nth_page(headbook.get_current_page())
     return key2gmwidg[notebookKey]
 

@@ -15,7 +15,7 @@ from pychess.System import glock
 from pychess.Variants.normal import NormalChess
 from pychess.Utils.Move import toSAN
 
-from logic import getStatus, isClaimableDraw
+from logic import getStatus, isClaimableDraw, playerHasMatingMaterial
 from const import *
 
 class GameModel (GObject, PooledThread):
@@ -33,6 +33,7 @@ class GameModel (GObject, PooledThread):
         "game_saved":    (SIGNAL_RUN_FIRST, TYPE_NONE, (str,)),
         "game_ended":    (SIGNAL_RUN_FIRST, TYPE_NONE, (int,)),
         "game_terminated":    (SIGNAL_RUN_FIRST, TYPE_NONE, ()),
+        "game_resumed":  (SIGNAL_RUN_FIRST, TYPE_NONE, ()),
         "action_error":  (SIGNAL_RUN_FIRST, TYPE_NONE, (object, int))
     }
     
@@ -153,6 +154,11 @@ class GameModel (GObject, PooledThread):
             if self.timemodel.getPlayerTime (opcolor) <= 0:
                 if self.timemodel.getPlayerTime (1-opcolor) <= 0:
                     self.end(DRAW, DRAW_CALLFLAG)
+                elif not playerHasMatingMaterial(self.boards[-1], (1-opcolor)):
+                    if opcolor == WHITE:
+                        self.end(DRAW, DRAW_BLACKINSUFFICIENTANDWHITETIME)
+                    else:
+                        self.end(DRAW, DRAW_WHITEINSUFFICIENTANDBLACKTIME)
                 else:
                     if player == self.players[WHITE]:
                         self.end(WHITEWON, WON_CALLFLAG)
@@ -419,6 +425,7 @@ class GameModel (GObject, PooledThread):
                 pass
             if self.timemodel:
                 self.timemodel.resume()
+        self.emit("game_resumed")
     
     def resume (self):
         glock.release()
