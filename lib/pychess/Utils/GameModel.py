@@ -67,7 +67,9 @@ class GameModel (GObject, PooledThread):
         self.needsSave = False
         # The uri the current game was loaded from, or None if not a loaded game
         self.uri = None
-
+        # The current game number if it was loaded from .pgn or .epg file
+        self.gameno = 0
+        
         self.comment = ""
        
         self.hintEngineSupportsVariant = False
@@ -103,7 +105,7 @@ class GameModel (GObject, PooledThread):
     lowply = property(_get_lowest_ply)
     
     def _get_curplayer (self):
-        return self.players[self.boards[-1].color]
+        return self.players[self.getBoardAtPly(self.ply).color]
     curplayer = property(_get_curplayer)
     
     def _plyToIndex (self, ply):
@@ -248,7 +250,8 @@ class GameModel (GObject, PooledThread):
                 chessfile = loader.load(protoopen(uri))
             else: 
                 chessfile = loader.load(uri)
-        
+        self.gameno = gameno
+
         self.emit("game_loading", uri)
         try:
             chessfile.loadToModel(gameno, position, self)

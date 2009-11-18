@@ -392,7 +392,7 @@ class LoadFileExtension (_GameInitializationMode):
                 loader = ionest.enddir[uri[uri.rfind(".")+1:]]
                 position = cls.loadSidePanel.get_position()
                 gameno = cls.loadSidePanel.get_gameno()
-                if chessFiles:
+                if chessFiles is not None:
                     chessFiles[uri] = cls.loadSidePanel.chessfile
                 ionest.generalStart(gamemodel, p0, p1, (uri, loader, gameno, position))
             else:
