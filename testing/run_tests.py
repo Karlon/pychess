@@ -1,13 +1,18 @@
 import unittest
 
+import __builtin__
+__builtin__.__dict__['_'] = lambda s: s
+
 modules_to_test = (
     "bitboard",
     "eval",
     "fen",
     "frc_castling",
-    "movegen",
+    #"movegen",
     "pgn",
     "zobrist",
+    'ficsmanagers',
+    'analysis',
     ) 
 
 def suite():

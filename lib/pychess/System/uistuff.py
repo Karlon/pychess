@@ -7,7 +7,8 @@ import random
 import Queue
 
 import gobject
-import gtk, pango
+import gtk, gtk.glade
+import pango
 
 from pychess.System import glock
 from pychess.System import conf
@@ -103,6 +104,11 @@ def appendAutowrapColumn (treeview, defwidth, name, **kvargs):
             iter = store.iter_next(iter)
         treeview.set_size_request(0,-1)
     treeview.connect_after("size-allocate", callback, column, cell)
+    
+    scroll = treeview.get_parent()
+    if isinstance(scroll, gtk.ScrolledWindow):
+        scroll.set_policy(gtk.POLICY_NEVER,
+                          scroll.get_policy()[1])
     
     return cell
 

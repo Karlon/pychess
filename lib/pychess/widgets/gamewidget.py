@@ -130,6 +130,9 @@ class GameWidget (gobject.GObject):
         finally:
             glock.release()
     
+    def __del__ (self):
+        self.board.__del__()
+    
     def initTabcontents(self):
         tabcontent = createAlignment(gtk.Notebook().props.tab_vborder,0,0,0)
         hbox = gtk.HBox()
@@ -222,6 +225,7 @@ class GameWidget (gobject.GObject):
     def setLocked (self, locked):
         """ Makes the board insensitive and turns of the tab ready indicator """
         self.board.setLocked(locked)
+        if not self.tabcontent.get_children(): return
         self.tabcontent.child.remove(self.tabcontent.child.get_children()[0])
         if not locked:
             self.tabcontent.child.pack_start(createImage(light_on), expand=False)
@@ -293,9 +297,6 @@ def delGameWidget (gmwidg):
     """ Remove the widget from the GUI after the game has been terminated """
     gmwidg.emit("closed")
     
-    if len(key2gmwidg) == 1:
-        getWidgets()["show_sidepanels"].set_active(True)
-    
     del key2gmwidg[gmwidg.notebookKey]
     pageNum = gmwidg.getPageNumber()
     headbook = getheadbook()
@@ -313,6 +314,8 @@ def delGameWidget (gmwidg):
         mainvbox.remove(mainvbox.get_children()[1])
         mainvbox.pack_end(background)
         background.show()
+    
+    gmwidg.__del__()
 
 def _ensureReadForGameWidgets ():
     mainvbox = widgets["mainvbox"]
@@ -432,7 +435,12 @@ def _ensureReadForGameWidgets ():
         leaf = leaf.dock(docks["chatPanel"][1], CENTER, docks["chatPanel"][0], "chatPanel")
         conf.set("chatPanel", True)
     
-    dock.connect("unrealize", lambda dock: dock.saveToXML(dockLocation))
+    def unrealize (dock):
+        # unhide the panel before saving so its configuration is saved correctly
+        notebooks["board"].get_parent().get_parent().zoomDown()
+        dock.saveToXML(dockLocation)
+        dock.__del__()
+    dock.connect("unrealize", unrealize)
     
     # The status bar
     
@@ -491,6 +499,9 @@ def attachGameWidget (gmwidg):
         show_tabs(True)
     
     headbook.set_current_page(-1)
+    
+    if headbook.get_n_pages() == 1 and not widgets["show_sidepanels"].get_active():
+        zoomToBoard(True)
 
 def cur_gmwidg ():
     headbook = getheadbook()
@@ -505,6 +516,7 @@ def getheadbook ():
     return widgets["mainvbox"].get_children()[1].child
 
 def zoomToBoard (viewZoomed):
+    if not notebooks["board"].get_parent(): return
     if viewZoomed:
         notebooks["board"].get_parent().get_parent().zoomUp()
     else:

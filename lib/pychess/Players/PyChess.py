@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+print "feature done=0"
+
 from time import time
 import sys, os
 import random, math
@@ -244,7 +246,6 @@ class PyChessCECP(PyChess):
         }
     
     def makeReady(self):
-        print "feature done=0"
         PyChess.makeReady(self)
     
     def run (self):
@@ -391,6 +392,7 @@ class PyChessCECP(PyChess):
         def process (worker, messages): print "\n".join(messages)
         self.worker.connect("published", process)
         def ondone (worker, result):
+            if not result: return
             self.board.applyMove(parseSAN(self.board,result))
             print "move %s" % result
         self.worker.connect("done", ondone)

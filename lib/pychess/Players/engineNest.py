@@ -96,6 +96,8 @@ backup = """
     
     <engine protocol="uci" protover="1" binname="glaurung">
         <meta><country>no</country></meta></engine>
+    <engine protocol="uci" protover="1" binname="stockfish">
+        <meta><country>no</country></meta></engine>
     <engine protocol="uci" protover="1" binname="ShredderClassicLinux">
         <meta><country>de</country></meta></engine>
     <engine protocol="uci" protover="1" binname="fruit_21_static"> 
@@ -127,7 +129,7 @@ class EngineDiscoverer (GObject, PooledThread):
         self.xmlpath = addHomePrefix("engines.xml")
         try:
             self.dom = ET.ElementTree(file=self.xmlpath)
-            c = compareVersions(self.dom.getroot().get('version'), ENGINES_XML_API_VERSION)
+            c = compareVersions(self.dom.getroot().get('version', default='0'), ENGINES_XML_API_VERSION)
             if c == -1:
                 log.warn("engineNest: engines.xml is outdated. It will be replaced\n")
                 self.dom = deepcopy(self.backup)
@@ -481,8 +483,8 @@ class EngineDiscoverer (GObject, PooledThread):
     
     def initAnalyzerEngine (self, xmlengine, mode, variant):
         engine = self.initEngine (xmlengine, WHITE)
-        engine.setOptionAnalyzing(mode)
         def optionsCallback (engine):
+            engine.setOptionAnalyzing(mode)
             engine.setOptionVariant(variant)
         engine.connect("readyForOptions", optionsCallback)
         engine.prestart()

@@ -1,17 +1,16 @@
 import os
-import sys
 import webbrowser
 import math
 import atexit
 import signal
 
-import pango, gobject, gtk
+import gobject, gtk
 from gtk import DEST_DEFAULT_MOTION, DEST_DEFAULT_HIGHLIGHT, DEST_DEFAULT_DROP
 
 from pychess.System import conf, glock, uistuff, prefix, SubProcess
 from pychess.System.uistuff import POSITION_NONE, POSITION_CENTER, POSITION_GOLDEN
 from pychess.System.Log import log
-from pychess.Utils.const import *
+from pychess.Utils.const import HINT, NAME, SPY, VERSION, VERSION_NAME
 from pychess.Utils import book # Kills pychess if no sqlite available
 from pychess.widgets import newGameDialog
 from pychess.widgets import tipOfTheDay
@@ -190,9 +189,10 @@ class PyChess:
         ionest.handler.connect("gmwidg_created",
                                GladeHandlers.__dict__["on_gmwidg_created"])
         
-        #---------------------- The only two menuitems that need special initing
+        #---------------------- The only menuitems that need special initing
         uistuff.keep(widgets["hint_mode"], "hint_mode")
         uistuff.keep(widgets["spy_mode"], "spy_mode")
+        uistuff.keep(widgets["show_sidepanels"], "show_sidepanels")
         
         #=======================================================================
         # Show main window and init d'n'd
@@ -252,7 +252,6 @@ class PyChess:
             glock.glock_connect_after(discoverer, "all_engines_discovered", do)
 
 def run (args):
-#    import gtkexcepthook
     PyChess(args)
     signal.signal(signal.SIGINT, gtk.main_quit)
     def cleanup ():

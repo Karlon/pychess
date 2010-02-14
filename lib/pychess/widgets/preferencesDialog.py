@@ -22,6 +22,8 @@ def run(widgets):
     page_widget = nb.get_nth_page(nb.get_current_page())
     if nb.get_tab_label(page_widget).get_text() == _('Sidepanels'):
         attachGameWidget(panels_gw)
+        if not widgets["show_sidepanels"].get_active():
+            widgets["show_sidepanels"].set_active(True)
 
 panels_gw = None
 def initialize(widgets):
@@ -46,6 +48,8 @@ def initialize(widgets):
         page_widget = widget.get_nth_page(pagenum)
         if widget.get_tab_label(page_widget).get_text() == _('Sidepanels'):
             attachGameWidget(panels_gw)
+            if not widgets["show_sidepanels"].get_active():
+                widgets["show_sidepanels"].set_active(True)
         else:
             if panels_gw in key2gmwidg.values():
                 delGameWidget(panels_gw)
@@ -403,24 +407,24 @@ class PanelTab:
         from pychess.widgets.gamewidget import sidePanels
         allstore = gtk.ListStore(bool, gtk.gdk.Pixbuf, str, object)
         for panel in sidePanels:
+            checked = conf.get(panel.__name__, True)
             panel_icon = gtk.gdk.pixbuf_new_from_file_at_size(panel.__icon__, 32, 32)
-            allstore.append((conf.get(panel.__name__, True), panel_icon, panel.__title__+"\n"+panel.__desc__, panel))
-            # TODO: the 3. column should be a 1x2 table
-            # TODO: with bold __title__ in first row and __desc__ in second row
+            text = "<b>%s</b>\n%s" % (panel.__title__, panel.__desc__)
+            allstore.append((checked, panel_icon, text, panel))
 
         tv = widgets["treeview1"]
         tv.set_model(allstore)
 
         cbrenderer = gtk.CellRendererToggle()
         cbrenderer.connect('toggled', self.col_toggled, allstore)
-        tv.append_column(gtk.TreeViewColumn(
-                "Active", cbrenderer, active=0))
-
-        tv.append_column(gtk.TreeViewColumn(
-                "Icon", gtk.CellRendererPixbuf(), pixbuf=1))
-
-        tv.append_column(gtk.TreeViewColumn(
-                "Name", gtk.CellRendererText(), text=2))
+        tv.append_column(gtk.TreeViewColumn("Active", cbrenderer, active=0))
+        
+        pixbuf = gtk.CellRendererPixbuf()
+        pixbuf.props.yalign = 0
+        pixbuf.props.ypad = 3
+        tv.append_column(gtk.TreeViewColumn("Icon", pixbuf, pixbuf=1))
+        
+        uistuff.appendAutowrapColumn(tv, 200, "Name", markup=2)
 
     def col_toggled( self, cell, path, model ):
         """

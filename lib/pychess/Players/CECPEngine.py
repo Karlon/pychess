@@ -12,10 +12,12 @@ from pychess.Utils.Offer import Offer
 from pychess.Utils.GameModel import GameModel
 from pychess.Utils.logic import validate, getMoveKillingKing
 from pychess.Utils.const import *
+from pychess.Utils.lutils.ldata import MATE_VALUE
 from pychess.System.Log import log
 from pychess.System.SubProcess import TimeOutError, SubProcessError
 from pychess.System.ThreadPool import pool
 from pychess.Variants import variants
+from pychess.Savers.pgn import movre as movere
 
 from ProtocolEngine import ProtocolEngine
 from Player import Player, PlayerIsDead, TurnInterrupt
@@ -32,23 +34,22 @@ def isdigits (strings):
     return True
 
 d_plus_dot_expr = re.compile(r"\d+\.")
-movere = re.compile("([a-hKQRBNOo][a-h0-8xOo+#=-]{1,6})[?!]*")
 
 anare = re.compile("""
-    ^                   # beginning of string
-    \s*                 #
-    \d+ \.?             # The ply analyzed. Some engines end it with a dot
-    \s+                 #
-    (Mat\d+ | [-\d\.]+) # Mat1 is used by gnuchess to specify mate in one.
-                        #        otherwise we should support a signed float
-    \s+                 #
-    [\d\.]+             # The time used in seconds
-    \s+                 #
-    [\d\.]+             # The score found in centipawns
-    \s+                 #
-    (.+)                # The Principal-Variation. With or without move numbers
-    \s*                 #
-    $                   # end of string
+    ^                        # beginning of string
+    \s*                      #
+    \d+ [+\-\.]?             # The ply analyzed. Some engines end it with a dot, minus or plus
+    \s+                      #
+    (-?Mat\s*\d+ | [-\d\.]+) # Mat1 is used by gnuchess to specify mate in one.
+                             #        otherwise we should support a signed float
+    \s+                      #
+    [\d\.]+                  # The time used in seconds
+    \s+                      #
+    [\d\.]+                  # The score found in centipawns
+    \s+                      #
+    (.+)                     # The Principal-Variation. With or without move numbers
+    \s*                      #
+    $                        # end of string
     """, re.VERBOSE)
                    
 #anare = re.compile("\d+\.?\s+ (Mat\d+|[-\d\.]+) \s+ \d+\s+\d+\s+((?:%s\s*)+)" % mov)
@@ -76,6 +77,19 @@ def inthread(f):
         pool.start(f, *args, **kw)
     return newFunction
 
+# There is no way in the CECP protocol to determine if an engine not answering
+# the protover=2 handshake with done=1 is old or just very slow. Thus we
+# need a timeout after which we conclude the engine is 'protover=1' and will
+# never answer. 
+# XBoard will only give 2 seconds, but as we are quite sure that
+# the engines support the protocol, we can add more. We don't add
+# infinite time though, just in case.
+# The engine can get more time by sending done=0
+TIME_OUT_FIRST = 10
+
+# The amount of seconds to add for the second timeout
+TIME_OUT_SECOND = 15
+
 class CECPEngine (ProtocolEngine):
     
     def __init__ (self, subprocess, color, protover):
@@ -98,7 +112,12 @@ class CECPEngine (ProtocolEngine):
             "colors":    1,
             "ics":       0,
             "name":      0,
-            "pause":     0
+            "pause":     0,
+            "nps":       0,
+            "debug":     0,
+            "memory":    0,
+            "smp":       0,
+            "egt":       '',
         }
         
         self.board = None
@@ -131,12 +150,7 @@ class CECPEngine (ProtocolEngine):
         print >> self.engine, "xboard"
         if self.protover == 2:
             print >> self.engine, "protover 2"
-            
-            # XBoard will only give 2 seconds, but as we are quite sure that
-            # the engines support the protocol, we can add more. We don't add
-            # infinite time though, just in case.
-            # The engine can get more time by sending done=0
-            self.timeout = time.time() + 5
+            self.timeout = time.time() + TIME_OUT_FIRST
     
     def start (self):
         if self.mode in (ANALYZING, INVERSE_ANALYZING):
@@ -154,6 +168,8 @@ class CECPEngine (ProtocolEngine):
                     r = self.returnQueue.get(True, max(self.timeout-time.time(),0))
             except Queue.Empty:
                 log.warn("Got timeout error\n", self.defname)
+                self.emit("readyForOptions")
+                self.emit("readyForMoves")
             else:
                 assert r == "ready"
     
@@ -228,7 +244,7 @@ class CECPEngine (ProtocolEngine):
             
             finally:
                 # Clear the analyzed data, if any
-                self.emit("analyze", [])
+                self.emit("analyze", [], None)
     
     #===========================================================================
     #    Send the player move updates
@@ -246,7 +262,7 @@ class CECPEngine (ProtocolEngine):
             return
         
         if self.mode == INVERSE_ANALYZING:
-            self.board = self.board.setColor(1-self.board.color)
+            self.board = self.board.switchColor()
             self.__printColor()
         
         self.__usermove(board2, move)
@@ -256,7 +272,7 @@ class CECPEngine (ProtocolEngine):
                 # Many engines don't like positions able to take down enemy
                 # king. Therefore we just return the "kill king" move
                 # automaticaly
-                self.emit("analyze", [getMoveKillingKing(self.board)])
+                self.emit("analyze", [getMoveKillingKing(self.board)], MATE_VALUE-1)
                 return
             self.__printColor()
     
@@ -282,13 +298,16 @@ class CECPEngine (ProtocolEngine):
         
         # Parse outputs
         r = self.returnQueue.get()
+        if r == "not ready":
+            log.warn("Engine seams to be protover=2, but is treated as protover=1", self.defname)
+            r = self.returnQueue.get()
+        if r == "ready":
+            r = self.returnQueue.get()
         if r == "del":
             raise PlayerIsDead, "Killed by forgin forces"
         if r == "int":
             raise TurnInterrupt
-        if r == "ready" or r == "not ready":
-            log.warn("Engine seams to be protover=2, but is treated as protover=1", repr(self))
-            r = self.returnQueue.get()
+        assert isinstance(r, Move), r
         return r
     
     @semisynced
@@ -324,6 +343,10 @@ class CECPEngine (ProtocolEngine):
                 self.__usermove(board, move)
             
             self.board = boards[-1]
+            
+            if self.mode == INVERSE_ANALYZING:
+                self.board = self.board.switchColor()
+                self.__printColor()
             
             #if self.mode in (ANALYZING, INVERSE_ANALYZING) or \
             #        gamemodel.boards[-1].color == self.color:
@@ -452,7 +475,7 @@ class CECPEngine (ProtocolEngine):
                 self._blockTillMove()
         
         if self.mode == INVERSE_ANALYZING:
-            self.board = self.board.setColor(1-self.board.color)
+            self.board = self.board.switchColor()
             self.__printColor()
         
         for i in xrange(moves):
@@ -468,7 +491,7 @@ class CECPEngine (ProtocolEngine):
             self.board = gamemodel.boards[-1]
         
         if self.mode == INVERSE_ANALYZING:
-            self.board = self.board.setColor(1-self.board.color)
+            self.board = self.board.switchColor()
             self.__printColor()
     
     #===========================================================================
@@ -528,6 +551,11 @@ class CECPEngine (ProtocolEngine):
         
         print >> self.engine, "post"
         print >> self.engine, "analyze"
+        
+        # workaround for crafty not sending analysis after it has found a mating line
+        # http://code.google.com/p/pychess/issues/detail?id=515
+        if "crafty" in self.features["myname"].lower():
+            print >> self.engine, "noise 0"
     
     def __printColor (self):
         #if self.features["colors"]:
@@ -635,13 +663,27 @@ class CECPEngine (ProtocolEngine):
             match = anare.match(line)
             if match:
                 score, moves = match.groups()
+                
+                if "mat" in score.lower():
+                    # Will look either like -Mat 3 or Mat3
+                    scoreval = MATE_VALUE - int("".join(c for c in score if c.isdigit()))
+                    if score.startswith('-'): scoreval = -scoreval
+                else:
+                    scoreval = int(score)
+                
                 mvstrs = movere.findall(moves)
-                moves = listToMoves (self.board, mvstrs, type=None, validate=True)
+                try:
+                    moves = listToMoves (self.board, mvstrs, type=None, validate=True, ignoreErrors=False)
+                except ParsingError, e:
+                    # ParsingErrors may happen when parsing "old" lines from
+                    # analyzing engines, which haven't yet noticed their new tasks
+                    log.debug("Ignored a line from analyzer: ParsingError%s\n" % e, self.defname)
+                    return
                 
                 # Don't emit if we weren't able to parse moves, or if we have a move
                 # to kill the opponent king - as it confuses many engines
                 if moves and not self.board.board.opIsChecked():
-                    self.emit("analyze", moves)
+                    self.emit("analyze", moves, scoreval)
                 
                 return
         
@@ -697,7 +739,7 @@ class CECPEngine (ProtocolEngine):
                     i = rest.find('"')
                     j = rest.find("'")
                     if i + j == -2:
-                        log.warn("Missing endquotation in %s feature", repr(self))
+                        log.warn("Missing endquotation in %s feature", self.defname)
                         value = rest
                     elif min(i, j) != -1:
                         value = rest[:min(i, j)]
@@ -715,9 +757,9 @@ class CECPEngine (ProtocolEngine):
                         self.emit("readyForMoves")
                         self.returnQueue.put("ready")
                     elif value == 0:
-                        log.log("Adds 10 minutes timeout", self.defname)
-                        # This'll buy you 15 more secs
-                        self.timeout = time.time()+15
+                        log.log("Adds %d seconds timeout\n" % TIME_OUT_SECOND, self.defname)
+                        # This'll buy you some more time
+                        self.timeout = time.time()+TIME_OUT_SECOND
                         self.returnQueue.put("not ready")
                     return
                 

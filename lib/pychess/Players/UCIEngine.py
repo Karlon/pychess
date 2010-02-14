@@ -8,6 +8,7 @@ from pychess.Utils.Offer import Offer
 from pychess.Utils.GameModel import GameModel
 from pychess.Utils.logic import validate, getMoveKillingKing
 from pychess.Utils.const import *
+from pychess.Utils.lutils.ldata import MATE_VALUE
 from pychess.System.Log import log
 from pychess.System.SubProcess import TimeOutError, SubProcessError
 from pychess.System.ThreadPool import pool
@@ -125,7 +126,7 @@ class UCIEngine (ProtocolEngine):
             
             finally:
                 # Clear the analyzed data, if any
-                self.emit("analyze", [])
+                self.emit("analyze", [], None)
     
     #===========================================================================
     #    Send the player move updates
@@ -275,7 +276,8 @@ class UCIEngine (ProtocolEngine):
             If you want to know the possible options, you should go to
             engineDiscoverer or use the getOption, getOptions and hasOption
             methods, while you are in your 'readyForOptions' signal handler """ 
-        assert not self.readyMoves
+        if self.readyMoves:
+            log.warn("Options set after 'readyok' are not sent to the engine", self.defname)
         self.optionsToBeSent[key] = value
     
     def getOption (self, option):
@@ -316,7 +318,7 @@ class UCIEngine (ProtocolEngine):
                     # Many engines don't like positions able to take down enemy
                     # king. Therefore we just return the "kill king" move
                     # automaticaly
-                    self.emit("analyze", [getMoveKillingKing(self.board)])
+                    self.emit("analyze", [getMoveKillingKing(self.board)], MATE_VALUE-1)
                     return
             print >> self.engine, "position fen", self.board.asFen()
             print >> self.engine, "go infinite"
@@ -390,9 +392,10 @@ class UCIEngine (ProtocolEngine):
             
             move = parseAN(self.board, parts[1])
             
-            # Some UCI engines send 'bestmove a1a1' as a tool of communication
-            # with polyglot, that cepc-uci adaptor. We should ignore this.
-            if move.cord0 == move.cord1 == Cord(A1):
+            if not validate(self.board, move):
+                # This is critical. To avoid game stalls, we need to resign on
+                # behalf of the engine.
+                self.returnQueue.put('del')
                 return
             
             self.board = self.board.move(move)
@@ -400,17 +403,48 @@ class UCIEngine (ProtocolEngine):
             if self.getOption('Ponder'):
                 if len(parts) == 4 and self.board:
                     self.pondermove = parseAN(self.board, parts[3])
-                    self._startPonder()
+                    # Engines don't always check for everything in their ponders
+                    if validate(self.board, self.pondermove):
+                        self._startPonder()
+                    else: self.pondermove = None
                 else: self.pondermove = None
             
             self.returnQueue.put(move)
         
         #----------------------------------------------------------- An Analysis
         if self.mode != NORMAL and parts[0] == "info" and "pv" in parts:
+            scoretype = parts[parts.index("score")+1]
+            if scoretype in ('lowerbound', 'upperbound'):
+                score = None
+            else:
+                score = int(parts[parts.index("score")+2])
+                if scoretype == 'mate':
+                    score = MATE_VALUE-abs(score)
+                    score *= score/abs(score) # sign
+            
             movstrs = parts[parts.index("pv")+1:]
-            moves = listToMoves (self.board, movstrs, AN, validate=True)
-            self.emit("analyze", moves)
+            try:
+                moves = listToMoves (self.board, movstrs, AN, validate=True, ignoreErrors=False)
+            except ParsingError, e:
+                # ParsingErrors may happen when parsing "old" lines from
+                # analyzing engines, which haven't yet noticed their new tasks
+                log.debug("Ignored (%s) from analyzer: ParsingError%s\n" %
+                          (' '.join(movstrs),e), self.defname)
+                return
+            
+            self.emit("analyze", moves, score)
             return
+    
+        #* score
+        #* cp <x>
+        #    the score from the engine's point of view in centipawns.
+        #* mate <y>
+        #    mate in y moves, not plies.
+        #    If the engine is getting mated use negative values for y.
+        #* lowerbound
+        #  the score is just a lower bound.
+        #* upperbound
+        #   the score is just an upper bound.
     
     #===========================================================================
     #    Info

@@ -11,7 +11,7 @@ weekdays = ("Mon","Tue","Wed","Thu","Fri","Sat","Sun")
 months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 sanmove = "([a-hxOoKQRBN0-8+#=-]{2,7})"
-moveListMoves = re.compile("(\d+)\. +%s +\(\d+:\d+\.\d+\) *(?:%s +\(\d+:\d+\.\d+\))?" %
+moveListMoves = re.compile("(\d+)\. +%s +\([\d:\.]+\) *(?:%s +\([\d:\.]+\))?" %
         (sanmove, sanmove))
 
 class AdjournManager (GObject):
@@ -36,7 +36,7 @@ class AdjournManager (GObject):
         
         self.connection.expect_fromplus(self.__onStoredResponseYES,
                                         "\s*C Opponent\s+On Type\s+Str\s+M\s+ECO\s+Date",
-                                        "\s*\d+: (B|W) (%s)\s+(Y|N) \[([a-z ]{3})\s+(\d+)\s+(\d+)\]\s+(\d+)-(\d+)\s+(W|B)(\d+)\s+(\?\?\?|[A-Z]\d+)\s+(%s)\s+(%s)\s+(\d+),\s+(\d+):(\d+)\s+([A-Z\?]+)\s+(\d{4})" %
+                                        "\s*\d+: (B|W) (%s)\s+(Y|N) \[([a-z ]{3})\s+(\d+)\s+(\d+)\]\s+(\d+)-(\d+)\s+(W|B)(\d+)\s+(---|\?\?\?|[A-Z]\d+)\s+(%s)\s+(%s)\s+(\d+),\s+(\d+):(\d+)\s+([A-Z\?]+)\s+(\d{4})" %
                                         (names, "|".join(weekdays), "|".join(months))) 
         
         self.adjournments = []
@@ -50,6 +50,7 @@ class AdjournManager (GObject):
         #     C Opponent     On Type          Str  M    ECO Date
         #  1: W TheDane       N [ br  2  12]  0-0  B2   ??? Sun Nov 23,  6:14 CST 1997
         #  2: W PyChess       Y [psu  2  12] 39-39 W3   C20 Sun Jan 11, 17:40 ??? 2009
+        #  3: B cjavad        N [ wr  2   2] 31-31 W18  --- Wed Dec 23, 06:58 PST 2009
         
         del self.adjournments[:]
         
@@ -106,6 +107,9 @@ class AdjournManager (GObject):
         
         pgnlist = []
         for line in matchlist[2:-1]:
+            if not moveListMoves.match(line):
+                print "HER!->", repr(line)
+            
             moveno, wmove, bmove = moveListMoves.match(line).groups()
             pgnlist.append(moveno+".")
             pgnlist.append(wmove)

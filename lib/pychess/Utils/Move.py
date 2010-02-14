@@ -24,8 +24,12 @@ class Move:
             self.cord1 = Cord(lmove.TCORD(self.move))
             
         else:
+            assert cord0 != None and cord1 != None, "cord0=%s, cord1=%s, board=%s" % (cord0, cord1, board)
+            assert board[cord0] != None, "cord0=%s, cord1=%s, board=%s" % (cord0, cord1, board)
             self.cord0 = cord0
             self.cord1 = cord1
+            if not board:
+                raise ValueError, "Move needs a Board object in order to investigate flags"
             
             self.flag = NORMAL_MOVE
             
@@ -85,9 +89,9 @@ class Move:
 # Parsers                                                                      #
 ################################################################################
 
-def listToMoves (board, mstrs, type=None, validate=False):
-    return [Move(move) for move in lmove.listToMoves(
-                                            board.board, mstrs, type, validate)]
+def listToMoves (board, mstrs, type=None, validate=False, ignoreErrors=False):
+    return [Move(move) for move in
+            lmove.listToMoves(board.board, mstrs, type, validate, ignoreErrors)]
 
 def parseAny (board, algnot):
     return Move(lmove.parseAny (board.board, algnot))

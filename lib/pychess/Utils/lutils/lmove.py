@@ -96,7 +96,7 @@ def listToSan (board, moves):
 # listToMoves                                                                  #
 ################################################################################
 
-def listToMoves (board, movstrs, type=None, testvalidate=False):
+def listToMoves (board, movstrs, type=None, testvalidate=False, ignoreErrors=False):
     # Work on a copy to ensure we don't break things
     board = board.clone()
     moves = []
@@ -112,13 +112,15 @@ def listToMoves (board, movstrs, type=None, testvalidate=False):
             elif type == LAN:
                 move = parseLAN (board, mstr)
         except ParsingError:
-            # We expect a ParsingError to be raised when parsing "old" lines
-            # from analyzing engines, which haven't yet noticed their new tasks
-            break
+            if ignoreErrors:
+                break
+            raise
         
         if testvalidate:
             if not validateMove (board, move):
-                break
+                if not ignoreErrors:
+                    raise ParsingError, (mstr, 'Validation', board.asFen())
+                break 
         
         moves.append(move)
         board.applyMove(move)
@@ -226,9 +228,9 @@ def toSAN (board, move, localRepr=False):
 
 def parseSAN (board, san):
     """ Parse a Short/Abbreviated Algebraic Notation string """
-    if len(san) < 2:
-        if not san:
-            raise ParsingError, (san, _("the move is an empty string"), board.asFen())
+    if not san:
+        raise ParsingError, (san, _("the move is an empty string"), board.asFen())
+    elif len(san) < 2:
         raise ParsingError, (san, _("the move is too short"), board.asFen())
     
     notat = san
