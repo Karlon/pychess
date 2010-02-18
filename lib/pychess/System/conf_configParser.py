@@ -2,9 +2,10 @@ import os, atexit
 from pychess.System.Log import log
 from ConfigParser import SafeConfigParser
 configParser = SafeConfigParser()
+from pychess.System.prefix import addUserConfigPrefix
 
 section = "General"
-path = os.path.join(os.environ["HOME"], ".pychessconf")
+path = addUserConfigPrefix("config")
 if os.path.isfile(path):
     configParser.readfp(open(path))
 if not configParser.has_section(section):

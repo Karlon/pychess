@@ -1,4 +1,5 @@
 import os
+import os.path
 import gettext
 import locale
 from time import sleep
@@ -13,11 +14,11 @@ from cairo import ImageSurface
 try:
     from gtksourceview import SourceBuffer
     from gtksourceview import SourceView
-    from gtksourceview import SourceLanguagesManager
+    from gtksourceview import SourceLanguagesManager as LanguageManager
 except ImportError:
     from gtksourceview2 import Buffer as SourceBuffer
     from gtksourceview2 import View as SourceView
-    from gtksourceview2 import LanguageManager as SourceLanguagesManager
+    from gtksourceview2 import LanguageManager
 
 from pychess.Utils.GameModel import GameModel
 from pychess.Utils.TimeModel import TimeModel
@@ -191,11 +192,11 @@ class _GameInitializationMode:
         table = gtk.Table(2, 2)
         table.props.row_spacing = 3
         table.props.column_spacing = 12
-        label = gtk.Label(_("Minutes")+":")
+        label = gtk.Label(_("Minutes:"))
         label.props.xalign = 0
         table.attach(label, 0, 1, 0, 1)
         table.attach(minSpin, 1, 2, 0, 1)
-        label = gtk.Label(_("Gain")+":")
+        label = gtk.Label(_("Gain:"))
         label.props.xalign = 0
         table.attach(label, 0, 1, 1, 2)
         table.attach(gainSpin, 1, 2, 1, 2)
@@ -438,11 +439,28 @@ class EnterNotationExtension (_GameInitializationMode):
         sourceview.set_insert_spaces_instead_of_tabs(True)
         sourceview.set_wrap_mode(gtk.WRAP_WORD)
 
-        man = SourceLanguagesManager()
-        lang = [l for l in man.get_available_languages() if l.get_name() == "PGN"][0]
-        cls.sourcebuffer.set_language(lang)
-
-        cls.sourcebuffer.set_highlight(True)
+        man = LanguageManager()
+        # Init new version
+        if hasattr(man.props, 'search_path'):
+            path = os.path.join(getDataPrefix(),"gtksourceview-1.0/language-specs")
+            man.props.search_path = man.props.search_path + [path]
+            if 'pgn' in man.get_language_ids():
+                lang = man.get_language('pgn')
+                cls.sourcebuffer.set_language(lang)
+            else:
+                log.warn("Unable to load pgn syntax-highlighting.")
+            cls.sourcebuffer.set_highlight_syntax(True)
+        # Init old version
+        else:
+            os.environ["XDG_DATA_DIRS"] = getDataPrefix()+":/usr/share/"
+            man = LanguageManager()
+            for lang in man.get_available_languages():
+                if lang.get_name() == "PGN":
+                    cls.sourcebuffer.set_language(lang)
+                    break
+            else:
+                log.warn("Unable to load pgn syntax-highlighting.")
+            cls.sourcebuffer.set_highlight(True)
 
     @classmethod
     def run (cls):
