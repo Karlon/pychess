@@ -1,6 +1,11 @@
-PyChess - a free chess client for Linux
+PyChess is a beautiful, easy to use, configurable and a highly versatile chess client created for Linux
+that is both directed at advanced and less tech savvy users. PyChess is arguably the best chess client available for Linux!
+If you're ever in need of a chess game,whether it be a quickie before lunch, 
+You'll get it in whatever fashion you require. 
+You can play against computers, or against players all over the world! Furthermore, if you're a beginner:
+You'll just fall in love with PyChess, which uses a chess engine of your choice to help improve your play. 
 
-The mission of PyChess is to create a free, pleasant, pygtk, chess game for the
+The primary goal of PyChess is to create a free, pleasant, pygtk, chess game for the
 Linux desktop that does everything you require from an advanced chess client.
 
 Project homepage: http://pychess.org/
